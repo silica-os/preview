@@ -790,4 +790,89 @@ void main() {
     await openFiles(tester, c, [pdf('libro.pdf', book(3))]);
     expect(text(tester, 'subtitle'), 'Pagina 1 di 3');
   });
+
+  group('menu bar model', () {
+    PlatformMenu menu(List<PlatformMenuItem> bar, String label) =>
+        bar.whereType<PlatformMenu>().firstWhere((m) => m.label == label);
+    List<PlatformMenuItem> items(PlatformMenu m) => [
+      for (final g in m.menus)
+        if (g is PlatformMenuItemGroup) ...g.members else g,
+    ];
+    PlatformMenuItem item(
+      List<PlatformMenuItem> bar,
+      String menuName,
+      String label,
+    ) => items(menu(bar, menuName)).firstWhere((i) => i.label == label);
+
+    Future<List<PlatformMenuItem>> model(WidgetTester tester) async {
+      final window = tester.state<PreviewWindowState>(
+        find.byType(PreviewWindow),
+      );
+      final l = AppLocalizations.of(window.context);
+      return silicaMenuModel(l, window.menus(l, unavailable: true));
+    }
+
+    testWidgets('the menus of the bar, in order', (tester) async {
+      final c = await pump(tester);
+      await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+      final bar = await model(tester);
+      expect(
+        [for (final m in bar.whereType<PlatformMenu>()) m.label],
+        ['Preview', 'File', 'Edit', 'View', 'Go', 'Tools', 'Window', 'Help'],
+      );
+      expect((bar.first as SilicaMenu).role, SilicaMenuRole.app);
+    });
+
+    testWidgets('states follow the document; unavailable items are disabled', (
+      tester,
+    ) async {
+      final c = await pump(tester);
+      await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+      var bar = await model(tester);
+      SilicaMenuItem at(String m, String label) =>
+          item(bar, m, label) as SilicaMenuItem;
+      expect(at('File', 'Open…').enabled, isTrue);
+      expect(at('View', 'Thumbnails').checked, isTrue);
+      expect(at('View', 'Continuous Scroll').checked, isTrue);
+      expect(at('View', 'Two Pages').checked, isFalse);
+      expect(at('Edit', 'Undo').enabled, isFalse);
+      for (final (m, label) in [
+        ('File', 'Print…'),
+        ('File', 'Duplicate'),
+        ('Edit', 'Cut'),
+        ('Edit', 'Paste'),
+        ('Tools', 'Crop'),
+        ('Tools', 'Remove Background'),
+      ]) {
+        expect(at(m, label).enabled, isFalse, reason: label);
+      }
+      expect(
+        (items(menu(bar, 'Edit')).firstWhere((i) => i.label == 'Find')
+                as SilicaMenu)
+            .enabled,
+        isTrue,
+      );
+      c.setLayout(PageLayout.two);
+      await tester.pump();
+      bar = await model(tester);
+      expect(at('View', 'Two Pages').checked, isTrue);
+      expect(at('View', 'Continuous Scroll').checked, isFalse);
+    });
+
+    testWidgets('choosing an item runs its action', (tester) async {
+      final c = await pump(tester);
+      await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+      var bar = await model(tester);
+      item(bar, 'View', 'Single Page').onSelected!();
+      await tester.pump();
+      expect(c.layout, PageLayout.single);
+      item(bar, 'View', 'Hide Sidebar').onSelected!();
+      await tester.pump();
+      expect(c.sidebar, SidebarMode.none);
+      expect(
+        (item(bar, 'File', 'Open…') as SilicaMenuItem).shortcut,
+        isA<SingleActivator>(),
+      );
+    });
+  });
 }

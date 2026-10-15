@@ -1681,6 +1681,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use Selection for Find'**
   String get useSelectionForFind;
+
+  /// No description provided for @menuWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get menuWindow;
+
+  /// No description provided for @menuHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get menuHelp;
+
+  /// No description provided for @newFromClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'New from Clipboard'**
+  String get newFromClipboard;
+
+  /// No description provided for @openRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Recent'**
+  String get openRecent;
+
+  /// No description provided for @duplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get duplicate;
+
+  /// No description provided for @moveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move To…'**
+  String get moveTo;
+
+  /// No description provided for @enterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Password…'**
+  String get enterPassword;
+
+  /// No description provided for @print.
+  ///
+  /// In en, this message translates to:
+  /// **'Print…'**
+  String get print;
+
+  /// No description provided for @cut.
+  ///
+  /// In en, this message translates to:
+  /// **'Cut'**
+  String get cut;
+
+  /// No description provided for @paste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get paste;
+
+  /// No description provided for @invertSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Invert Selection'**
+  String get invertSelection;
+
+  /// No description provided for @pageFromFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Page from File…'**
+  String get pageFromFile;
+
+  /// No description provided for @moveToTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Trash'**
+  String get moveToTrash;
+
+  /// No description provided for @jumpToSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to Selection'**
+  String get jumpToSelection;
+
+  /// No description provided for @zoomToSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom to Selection'**
+  String get zoomToSelection;
+
+  /// No description provided for @customizeToolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize Toolbar…'**
+  String get customizeToolbar;
+
+  /// No description provided for @showMagnifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Magnifier'**
+  String get showMagnifier;
+
+  /// No description provided for @rectangularSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Rectangular Selection'**
+  String get rectangularSelection;
+
+  /// No description provided for @textSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Selection'**
+  String get textSelection;
+
+  /// No description provided for @redact.
+  ///
+  /// In en, this message translates to:
+  /// **'Redact'**
+  String get redact;
+
+  /// No description provided for @mask.
+  ///
+  /// In en, this message translates to:
+  /// **'Mask'**
+  String get mask;
+
+  /// No description provided for @loupe.
+  ///
+  /// In en, this message translates to:
+  /// **'Loupe'**
+  String get loupe;
+
+  /// No description provided for @signature.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature'**
+  String get signature;
+
+  /// No description provided for @crop.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop'**
+  String get crop;
+
+  /// No description provided for @removeBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Background'**
+  String get removeBackground;
 }
 
 class _AppLocalizationsDelegate

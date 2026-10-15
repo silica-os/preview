@@ -5,6 +5,7 @@
 // never dead: what Preview cannot do is not listed at all.
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:silica_ui/silica_ui.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -136,11 +137,23 @@ const _down = LogicalKeyboardKey.arrowDown;
 const _pageUp = LogicalKeyboardKey.pageUp;
 const _pageDown = LogicalKeyboardKey.pageDown;
 
+/// The menus. [unavailable] adds the items the reference shows that Preview cannot do yet,
+/// disabled (the menu bar's model); the context menus and the keyboard leave them out.
 List<AppMenu> previewMenus(
   AppLocalizations l,
   ViewerController c,
-  WindowActions a,
-) {
+  WindowActions a, {
+  bool unavailable = false,
+}) {
+  final u = unavailable;
+  Command off(String id, String label, {Keys? keys, List<Command?>? submenu}) =>
+      Command(
+        'preview.$id',
+        label,
+        keys: [?keys],
+        enabled: false,
+        submenu: submenu,
+      );
   final open = c.document != null;
   final pdf = c.isPdf;
   final image = c.image;
@@ -167,6 +180,12 @@ List<AppMenu> previewMenus(
       );
   return [
     AppMenu('file', l.menuFile, [
+      if (u)
+        off(
+          'new_from_clipboard',
+          l.newFromClipboard,
+          keys: const Keys(LogicalKeyboardKey.keyN),
+        ),
       Command(
         'preview.open',
         l.open,
@@ -174,6 +193,7 @@ List<AppMenu> previewMenus(
         keys: const [Keys(LogicalKeyboardKey.keyO)],
         run: a.open,
       ),
+      if (u) off('open_recent', l.openRecent, submenu: const []),
       null,
       Command(
         'preview.close',
@@ -190,7 +210,15 @@ List<AppMenu> previewMenus(
         enabled: c.canSave,
         run: a.save,
       ),
+      if (u) ...[
+        off(
+          'duplicate',
+          l.duplicate,
+          keys: const Keys(LogicalKeyboardKey.keyS, shift: true),
+        ),
+      ],
       Command('preview.rename', l.renameCommand, enabled: open, run: a.rename),
+      if (u) off('move_to', l.moveTo),
       Command(
         'preview.revert_menu',
         l.revertTo,
@@ -204,14 +232,16 @@ List<AppMenu> previewMenus(
           ),
         ],
       ),
-      if (pdf) ...[
+      if (u || pdf) ...[
         null,
-        Command(
-          'preview.permissions',
-          l.editPermissions,
-          enabled: a.canWritePdf,
-          run: a.permissions,
-        ),
+        if (u) off('enter_password', l.enterPassword),
+        if (pdf)
+          Command(
+            'preview.permissions',
+            l.editPermissions,
+            enabled: a.canWritePdf,
+            run: a.permissions,
+          ),
       ],
       null,
       Command('preview.export', l.export, enabled: open, run: a.export),
@@ -221,6 +251,10 @@ List<AppMenu> previewMenus(
         enabled: image != null,
         run: a.exportPdf,
       ),
+      if (u) ...[
+        null,
+        off('print', l.print, keys: const Keys(LogicalKeyboardKey.keyP)),
+      ],
     ]),
     AppMenu('edit', l.menuEdit, [
       Command(
@@ -240,6 +274,7 @@ List<AppMenu> previewMenus(
         run: c.redo,
       ),
       null,
+      if (u) off('cut', l.cut, keys: const Keys(LogicalKeyboardKey.keyX)),
       Command(
         'preview.copy',
         l.copy,
@@ -248,6 +283,7 @@ List<AppMenu> previewMenus(
         enabled: c.canCopy,
         run: a.copy,
       ),
+      if (u) off('paste', l.paste, keys: const Keys(LogicalKeyboardKey.keyV)),
       Command(
         'preview.delete',
         l.delete,
@@ -262,13 +298,20 @@ List<AppMenu> previewMenus(
         enabled: pdf,
         run: c.selectAll,
       ),
-      if (pdf) ...[
+      if (u)
+        off(
+          'invert_selection',
+          l.invertSelection,
+          keys: const Keys(LogicalKeyboardKey.keyI, shift: true),
+        ),
+      if (pdf || u) ...[
         null,
         Command(
           'preview.insert',
           l.insert,
           enabled: pages,
           submenu: [
+            if (u) off('insert_file', l.pageFromFile),
             Command(
               'preview.insert_blank',
               l.blankPage,
@@ -278,6 +321,12 @@ List<AppMenu> previewMenus(
           ],
         ),
       ],
+      if (u)
+        off(
+          'trash',
+          l.moveToTrash,
+          keys: const Keys(LogicalKeyboardKey.backspace),
+        ),
       null,
       Command(
         'preview.find_menu',
@@ -316,6 +365,12 @@ List<AppMenu> previewMenus(
             enabled: c.canCopy,
             run: a.findSelection,
           ),
+          if (u)
+            off(
+              'find_jump',
+              l.jumpToSelection,
+              keys: const Keys(LogicalKeyboardKey.keyJ),
+            ),
         ],
       ),
     ]),
@@ -394,6 +449,12 @@ List<AppMenu> previewMenus(
         enabled: c.canZoomOut,
         run: c.zoomOut,
       ),
+      if (u)
+        off(
+          'zoom_to_selection',
+          l.zoomToSelection,
+          keys: const Keys(LogicalKeyboardKey.digit8, shift: true),
+        ),
       null,
       Command(
         'preview.markup',
@@ -411,6 +472,7 @@ List<AppMenu> previewMenus(
         keys: const [Keys(LogicalKeyboardKey.keyT, option: true)],
         run: a.toolbar,
       ),
+      if (u) off('customize_toolbar', l.customizeToolbar),
       null,
       Command(
         'preview.slideshow',
@@ -505,7 +567,14 @@ List<AppMenu> previewMenus(
         enabled: open,
         run: c.toggleInspector,
       ),
+      if (u) off('magnifier', l.showMagnifier),
       null,
+      if (u) ...[
+        off('select_rectangular', l.rectangularSelection),
+        off('select_text', l.textSelection),
+        off('redact', l.redact),
+        null,
+      ],
       Command(
         'preview.adjust_size',
         l.adjustSize,
@@ -582,6 +651,17 @@ List<AppMenu> previewMenus(
             ),
             shape('bubble', l.shapeBubble, ShapeKind.speechBubble),
           ],
+          if (u) ...[
+            null,
+            off('annotate.mask', l.mask),
+            off(
+              'annotate.loupe',
+              l.loupe,
+              keys: const Keys(LogicalKeyboardKey.keyL, control: true),
+            ),
+            null,
+            off('annotate.signature', l.signature, submenu: const []),
+          ],
         ],
       ),
       if (pdf) ...[
@@ -624,6 +704,14 @@ List<AppMenu> previewMenus(
         enabled: c.canFlip,
         run: c.flipVertical,
       ),
+      if (u) ...[
+        off('crop', l.crop, keys: const Keys(LogicalKeyboardKey.keyK)),
+        off(
+          'remove_background',
+          l.removeBackground,
+          keys: const Keys(LogicalKeyboardKey.keyK, shift: true),
+        ),
+      ],
     ]),
   ];
 }
@@ -697,3 +785,71 @@ Command? findCommand(List<AppMenu> menus, String id) {
   }
   return null;
 }
+
+SingleActivator? _activator(Command command) {
+  if (command.keys.isEmpty) return null;
+  final k = command.keys.first;
+  return SingleActivator(
+    k.key,
+    meta: k.command || k.control,
+    control: k.control,
+    shift: k.shift,
+    alt: k.option,
+  );
+}
+
+PlatformMenuItem _barItem(Command command) {
+  if (command.submenu case final sub?) {
+    return SilicaMenu(
+      label: command.label,
+      enabled: command.enabled,
+      menus: _barGroups(sub),
+    );
+  }
+  return SilicaMenuItem(
+    label: command.label,
+    shortcut: _activator(command),
+    checked: command.checked,
+    enabled: command.enabled && command.run != null,
+    onSelected: command.run,
+  );
+}
+
+/// Items split at the separators (null) into groups, as the bar draws them.
+List<PlatformMenuItem> _barGroups(List<Command?> items) {
+  final groups = <List<PlatformMenuItem>>[[]];
+  for (final command in items) {
+    if (command == null) {
+      if (groups.last.isNotEmpty) groups.add([]);
+    } else {
+      groups.last.add(_barItem(command));
+    }
+  }
+  return [
+    for (final group in groups)
+      if (group.isNotEmpty) PlatformMenuItemGroup(members: group),
+  ];
+}
+
+/// The menus as the model of Silica's menu bar (silica-menu-v1): the app menu (Services, Hide,
+/// Quit are the bar's), the table's menus, the Window menu and Help. The View menu ends with
+/// the bar's full screen item.
+List<PlatformMenuItem> silicaMenuModel(
+  AppLocalizations l,
+  List<AppMenu> menus,
+) => [
+  SilicaMenus.app(l.appName),
+  for (final menu in menus)
+    SilicaMenu(
+      label: menu.title,
+      menus: [
+        ..._barGroups(menu.items),
+        if (menu.id == 'view')
+          const PlatformMenuItemGroup(
+            members: [SilicaMenuItem.system(SilicaMenuItemRole.fullScreen)],
+          ),
+      ],
+    ),
+  SilicaMenus.window(l.menuWindow),
+  SilicaMenus.help(l.menuHelp),
+];

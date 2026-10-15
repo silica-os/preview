@@ -877,4 +877,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get useSelectionForFind => 'Use Selection for Find';
+
+  @override
+  String get menuWindow => 'Window';
+
+  @override
+  String get menuHelp => 'Help';
+
+  @override
+  String get newFromClipboard => 'New from Clipboard';
+
+  @override
+  String get openRecent => 'Open Recent';
+
+  @override
+  String get duplicate => 'Duplicate';
+
+  @override
+  String get moveTo => 'Move To…';
+
+  @override
+  String get enterPassword => 'Enter Password…';
+
+  @override
+  String get print => 'Print…';
+
+  @override
+  String get cut => 'Cut';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get invertSelection => 'Invert Selection';
+
+  @override
+  String get pageFromFile => 'Page from File…';
+
+  @override
+  String get moveToTrash => 'Move to Trash';
+
+  @override
+  String get jumpToSelection => 'Jump to Selection';
+
+  @override
+  String get zoomToSelection => 'Zoom to Selection';
+
+  @override
+  String get customizeToolbar => 'Customize Toolbar…';
+
+  @override
+  String get showMagnifier => 'Show Magnifier';
+
+  @override
+  String get rectangularSelection => 'Rectangular Selection';
+
+  @override
+  String get textSelection => 'Text Selection';
+
+  @override
+  String get redact => 'Redact';
+
+  @override
+  String get mask => 'Mask';
+
+  @override
+  String get loupe => 'Loupe';
+
+  @override
+  String get signature => 'Signature';
+
+  @override
+  String get crop => 'Crop';
+
+  @override
+  String get removeBackground => 'Remove Background';
 }

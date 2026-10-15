@@ -881,4 +881,79 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get useSelectionForFind => 'Cerca la selezione';
+
+  @override
+  String get menuWindow => 'Finestra';
+
+  @override
+  String get menuHelp => 'Aiuto';
+
+  @override
+  String get newFromClipboard => 'Nuovo dagli appunti';
+
+  @override
+  String get openRecent => 'Apri recenti';
+
+  @override
+  String get duplicate => 'Duplica';
+
+  @override
+  String get moveTo => 'Sposta in…';
+
+  @override
+  String get enterPassword => 'Inserisci password…';
+
+  @override
+  String get print => 'Stampa…';
+
+  @override
+  String get cut => 'Taglia';
+
+  @override
+  String get paste => 'Incolla';
+
+  @override
+  String get invertSelection => 'Inverti selezione';
+
+  @override
+  String get pageFromFile => 'Pagina dal file…';
+
+  @override
+  String get moveToTrash => 'Sposta nel Cestino';
+
+  @override
+  String get jumpToSelection => 'Vai alla selezione';
+
+  @override
+  String get zoomToSelection => 'Ingrandisci la selezione';
+
+  @override
+  String get customizeToolbar => 'Personalizza la barra strumenti…';
+
+  @override
+  String get showMagnifier => 'Mostra lente d’ingrandimento';
+
+  @override
+  String get rectangularSelection => 'Selezione rettangolare';
+
+  @override
+  String get textSelection => 'Selezione testo';
+
+  @override
+  String get redact => 'Oscura';
+
+  @override
+  String get mask => 'Maschera';
+
+  @override
+  String get loupe => 'Lente di ingrandimento';
+
+  @override
+  String get signature => 'Firma';
+
+  @override
+  String get crop => 'Ritaglia';
+
+  @override
+  String get removeBackground => 'Rimuovi sfondo';
 }

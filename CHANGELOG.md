@@ -10,7 +10,9 @@
   Adjust Size; undo, "Edited", saving on close and ⌘S, Revert.
 - The password in the window, the title popover (rename), the find bar, the inspector pane, the
   slideshow, the export sheet with TIFF and transparency, menus and context menus as measured.
-- silica_ui 0.30.1; image 4.12.
+- Menus in Silica's menu bar (silica-desktop#175): the app menu, File, Edit, View, Go, Tools,
+  Window and Help as measured, with the items Preview cannot do yet shown disabled.
+- silica_ui 0.34.0; image 4.12.
 
 ## 0.1.0 · 2026-10-15
 

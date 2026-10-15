@@ -517,43 +517,45 @@ class PreviewWindowState extends State<PreviewWindow>
 
   bool get _canWritePdf => c.loader.writer != null;
 
-  List<AppMenu> menus(AppLocalizations l) => previewMenus(
-    l,
-    c,
-    WindowActions(
-      open: () => unawaited(open()),
-      close: () {
-        if (widget.onClose != null) {
-          widget.onClose!();
-        } else {
-          unawaited(SilicaApp.closeWindow());
-        }
-      },
-      save: () => unawaited(_save()),
-      rename: () {
-        final anchor = _titleAnchor.currentContext;
-        if (anchor != null) _openTitlePopover(anchor);
-      },
-      revert: () => unawaited(_revert()),
-      export: () => unawaited(export()),
-      exportPdf: () => unawaited(export(format: ExportFormat.pdf)),
-      permissions: () => unawaited(_editPermissions()),
-      goToPage: () => unawaited(_goToPage()),
-      find: _find,
-      findSelection: _findSelection,
-      copy: () => unawaited(_copy()),
-      delete: _deleteAction,
-      markup: _toggleMarkup,
-      markupShown: _markupShown,
-      toolbar: () => setState(() => _toolbarShown = !_toolbarShown),
-      toolbarShown: _toolbarShown,
-      slideshow: () => setState(() => _slideshow = true),
-      adjustSize: () => unawaited(_adjustSize()),
-      addShape: _addShape,
-      addNote: () => unawaited(_addNote()),
-      canWritePdf: _canWritePdf,
-    ),
-  );
+  List<AppMenu> menus(AppLocalizations l, {bool unavailable = false}) =>
+      previewMenus(
+        l,
+        c,
+        WindowActions(
+          open: () => unawaited(open()),
+          close: () {
+            if (widget.onClose != null) {
+              widget.onClose!();
+            } else {
+              unawaited(SilicaApp.closeWindow());
+            }
+          },
+          save: () => unawaited(_save()),
+          rename: () {
+            final anchor = _titleAnchor.currentContext;
+            if (anchor != null) _openTitlePopover(anchor);
+          },
+          revert: () => unawaited(_revert()),
+          export: () => unawaited(export()),
+          exportPdf: () => unawaited(export(format: ExportFormat.pdf)),
+          permissions: () => unawaited(_editPermissions()),
+          goToPage: () => unawaited(_goToPage()),
+          find: _find,
+          findSelection: _findSelection,
+          copy: () => unawaited(_copy()),
+          delete: _deleteAction,
+          markup: _toggleMarkup,
+          markupShown: _markupShown,
+          toolbar: () => setState(() => _toolbarShown = !_toolbarShown),
+          toolbarShown: _toolbarShown,
+          slideshow: () => setState(() => _slideshow = true),
+          adjustSize: () => unawaited(_adjustSize()),
+          addShape: _addShape,
+          addNote: () => unawaited(_addNote()),
+          canWritePdf: _canWritePdf,
+        ),
+        unavailable: unavailable,
+      );
 
   final GlobalKey _titleAnchor = GlobalKey();
 
@@ -1061,83 +1063,91 @@ class PreviewWindowState extends State<PreviewWindow>
           ),
       ],
     );
-    return Focus(
-      focusNode: _focus,
-      autofocus: true,
-      onKeyEvent: _onKey,
-      child: ColoredBox(
-        color: colors.window,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: _toolbarShown
-                  ? ScrollUnderToolbar(
-                      toolbar: toolbar,
-                      active: widget.active,
-                      scrollPredicate: anyVerticalScrollUnderPredicate,
-                      header: header == 0
-                          ? null
-                          : Column(
-                              children: [
-                                if (_findBar && c.searching)
-                                  FindBar(controller: c, onDone: _closeSearch),
-                                if (_markupShown && c.document != null)
-                                  MarkupBar(
-                                    controller: c,
-                                    onAddShape: _addShape,
-                                    onAdjustSize: () =>
-                                        unawaited(_adjustSize()),
-                                    onNote: () => unawaited(_addNote()),
-                                  ),
-                              ],
-                            ),
-                      headerHeight: header,
-                      body: (context, padding) => body,
-                    )
-                  : body,
-            ),
-            if (_slideshow && c.document != null)
+    return SilicaMenuBar(
+      // The keys are handled by `_onKey` (⌘ and Ctrl, several keys per command): the bar shows them.
+      shortcuts: false,
+      menus: silicaMenuModel(l, menus(l, unavailable: true)),
+      child: Focus(
+        focusNode: _focus,
+        autofocus: true,
+        onKeyEvent: _onKey,
+        child: ColoredBox(
+          color: colors.window,
+          child: Stack(
+            children: [
               Positioned.fill(
-                child: Slideshow(
-                  controller: c,
-                  onEnd: () {
-                    setState(() => _slideshow = false);
-                    _focus.requestFocus();
-                  },
-                ),
-              ),
-            if (_alert case (final title, final message, final buttons))
-              Positioned.fill(
-                child: ColoredBox(
-                  color: const Color(0x33000000),
-                  child: Center(
-                    child: SizedBox(
-                      width: buttons == null
-                          ? null
-                          : PreviewMetrics.revertAlert.width,
-                      child: SilicaAlert(
-                        key: const ValueKey('alert'),
-                        title: title,
-                        message: message,
-                        opaque: true,
-                        buttons:
-                            buttons ??
-                            [
-                              AlertButton(
-                                l.ok,
-                                role: AlertRole.primary,
-                                onPressed: () {
-                                  setState(() => _alert = null);
-                                  _focus.requestFocus();
-                                },
+                child: _toolbarShown
+                    ? ScrollUnderToolbar(
+                        toolbar: toolbar,
+                        active: widget.active,
+                        scrollPredicate: anyVerticalScrollUnderPredicate,
+                        header: header == 0
+                            ? null
+                            : Column(
+                                children: [
+                                  if (_findBar && c.searching)
+                                    FindBar(
+                                      controller: c,
+                                      onDone: _closeSearch,
+                                    ),
+                                  if (_markupShown && c.document != null)
+                                    MarkupBar(
+                                      controller: c,
+                                      onAddShape: _addShape,
+                                      onAdjustSize: () =>
+                                          unawaited(_adjustSize()),
+                                      onNote: () => unawaited(_addNote()),
+                                    ),
+                                ],
                               ),
-                            ],
+                        headerHeight: header,
+                        body: (context, padding) => body,
+                      )
+                    : body,
+              ),
+              if (_slideshow && c.document != null)
+                Positioned.fill(
+                  child: Slideshow(
+                    controller: c,
+                    onEnd: () {
+                      setState(() => _slideshow = false);
+                      _focus.requestFocus();
+                    },
+                  ),
+                ),
+              if (_alert case (final title, final message, final buttons))
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: const Color(0x33000000),
+                    child: Center(
+                      child: SizedBox(
+                        width: buttons == null
+                            ? null
+                            : PreviewMetrics.revertAlert.width,
+                        child: SilicaAlert(
+                          key: const ValueKey('alert'),
+                          title: title,
+                          message: message,
+                          opaque: true,
+                          buttons:
+                              buttons ??
+                              [
+                                AlertButton(
+                                  l.ok,
+                                  role: AlertRole.primary,
+                                  onPressed: () {
+                                    setState(() => _alert = null);
+                                    _focus.requestFocus();
+                                  },
+                                ),
+                              ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

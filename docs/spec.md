@@ -42,9 +42,11 @@ menus; measured 2026-10-15). What was not measured is marked *provisional*. Deta
 ## Commands
 
 Every action is a command, declared once in `lib/src/ui/menus.dart` with its menu, its shortcut
-and its state. Until apps can publish their menus to the Silica menu bar, the same table drives
-the keyboard and the window's context menu (the reference's context items first, then one
-submenu per menu). The menus follow the reference's (PREVIEW-02 › Menus, read through
+and its state. The same table is published to Silica's menu bar (`SilicaMenuBar`, silica-menu-v1:
+the app menu, File, Edit, View, Go, Tools, Window, Help; checkmarks and enabled states follow
+the document), drives the keyboard (the window binds ⌘ and Ctrl itself) and the window's context
+menu (the reference's context items first, then one submenu per menu). The bar also shows, disabled, the
+items of the reference that Preview cannot do yet (listed below); the context menu leaves them out. The menus follow the reference's (PREVIEW-02 › Menus, read through
 accessibility), keeping the items Preview can do.
 
 | Menu | Command | Shortcut |
@@ -81,8 +83,8 @@ accessibility), keeping the items Preview can do.
 | Tools | `preview.rotate_left`, `preview.rotate_right` | ⌘L, ⌘R |
 | Tools | `preview.flip_horizontal`, `preview.flip_vertical` (images) | — |
 
-⌃⌘ is Ctrl together with Super. The app menu (Quit), full screen and the Window menu are the
-shell's. Not offered: print (#5), share (#1), Open Recent, Duplicate, Move To, Insert › Page
+⌃⌘ is Ctrl together with Super. The app menu (Services, Hide, Quit), full screen and the Window menu are the
+shell's. Shown disabled in the bar: print (#5), share (#1), Open Recent, Duplicate, Move To, Insert › Page
 from File (#17), the selection tools and crop (#10), the loupe, signatures, adjust colour (#12),
 form filling (#15), remove background (#19), import from devices, writing tools, colour
 proofing, 3D.
