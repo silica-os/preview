@@ -9,8 +9,8 @@ import 'package:image/image.dart' as img;
 import 'package:preview/src/export/pdf_writer.dart';
 
 /// A PDF with one page per entry of `pages` (each a list of text lines), 300 × 400 pt, and an
-/// outline entry "Chapter n" for each page.
-Uint8List textPdf(List<List<String>> pages) {
+/// outline entry "Chapter n" for each page; `rotate` is every page's /Rotate.
+Uint8List textPdf(List<List<String>> pages, {int rotate = 0}) {
   final n = pages.length;
   int page(int i) => 5 + 3 * i;
   int content(int i) => 6 + 3 * i;
@@ -42,7 +42,7 @@ Uint8List textPdf(List<List<String>> pages) {
     objects
       ..add(
         ascii.encode(
-          '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 400] '
+          '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 400] /Rotate $rotate '
           '/Resources << /Font << /F1 4 0 R >> >> /Contents ${content(i)} 0 R >>',
         ),
       )
