@@ -979,7 +979,11 @@ class PreviewWindowState extends State<PreviewWindow>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final colors = PreviewColors.of(context);
-    final title = c.image?.name ?? c.document?.title ?? l.appName;
+    final locked = c.passwordFor;
+    final title =
+        c.image?.name ??
+        c.document?.title ??
+        (locked == null ? l.appName : baseName(locked));
     final band = (_toolbarShown ? toolbarHeight : 0.0);
     final header =
         (_findBar && c.searching ? PreviewMetrics.findBarHeight : 0.0) +

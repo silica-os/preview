@@ -582,9 +582,24 @@ void main() {
     await openFiles(tester, c, [path]);
     await tester.pump();
     expect(find.byKey(const ValueKey('password view')), findsOneWidget);
+    expect(text(tester, 'title'), 'secret.pdf');
     expect(
       tester.getSize(find.byKey(const ValueKey('password field'))),
       PreviewMetrics.passwordField,
+    );
+    // The field has the keyboard.
+    await tester.pump();
+    expect(
+      tester
+          .widget<EditableText>(
+            find.descendant(
+              of: find.byKey(const ValueKey('password field')),
+              matching: find.byType(EditableText),
+            ),
+          )
+          .focusNode
+          .hasFocus,
+      isTrue,
     );
     expect(text(tester, 'password message'), 'Type the password to open it.');
     await tester.enterText(find.byKey(const ValueKey('password field')), 'no');
@@ -738,6 +753,18 @@ void main() {
     expect(
       tester.getSize(find.byKey(const ValueKey('title popover'))),
       PreviewMetrics.titlePopover,
+    );
+    // The name field has the keyboard, the name selected.
+    final field = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byKey(const ValueKey('rename field')),
+        matching: find.byType(EditableText),
+      ),
+    );
+    expect(field.focusNode.hasFocus, isTrue);
+    expect(
+      field.controller.selection,
+      const TextSelection(baseOffset: 0, extentOffset: 5),
     );
     await tester.enterText(
       find.byKey(const ValueKey('rename field')),

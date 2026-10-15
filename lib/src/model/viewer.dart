@@ -1229,9 +1229,12 @@ class ViewerController extends ChangeNotifier {
   bool get canAnnotate =>
       isPdf && (pdf!.security?.annotating ?? true) && sourceOf(current) != null;
 
+  /// The toolbar's highlight button: turns highlighting on or off; turning it on with text
+  /// selected marks that text at once.
   void toggleHighlighting() {
     if (!isPdf) return;
     highlighting = !highlighting;
+    if (highlighting && canCopy && canAnnotate) unawaited(markSelection());
     _notify();
   }
 
@@ -1663,6 +1666,20 @@ class ViewerController extends ChangeNotifier {
     if (env.containsKey('FLUTTER_TEST')) return Directory.systemTemp;
     final cache = env['XDG_CACHE_HOME'] ?? '${env['HOME'] ?? '/tmp'}/.cache';
     return Directory('$cache/preview')..createSync(recursive: true);
+  }
+
+  /// Drops the copies a Preview that did not close cleanly left behind (one Preview runs per
+  /// session: those of a running window cannot be there yet).
+  static void forgetOriginals() {
+    try {
+      for (final dir in _originalsRoot.listSync()) {
+        if (dir is Directory && baseName(dir.path).startsWith('original-')) {
+          dir.deleteSync(recursive: true);
+        }
+      }
+    } on FileSystemException {
+      // Nothing to clean.
+    }
   }
 
   /// Copies `path` aside before it is first overwritten.

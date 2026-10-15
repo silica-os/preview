@@ -5,6 +5,7 @@ import 'package:silica_ui/silica_ui.dart';
 
 import 'src/args.dart';
 import 'src/model/document.dart';
+import 'src/model/viewer.dart';
 import 'src/pdf/poppler.dart';
 import 'src/pdf/qpdf.dart';
 import 'src/portal.dart';
@@ -19,6 +20,7 @@ void main(List<String> args) {
   // A document app: closing its last window keeps it running (APP-LC); a reopen builds a new
   // window with the Open dialog (`SilicaAppWindow` in the app).
   SilicaApp.quitWhenLastWindowCloses = false;
+  ViewerController.forgetOriginals();
   runApp(
     PreviewApp(
       loader: DocumentLoader(

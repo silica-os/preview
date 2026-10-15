@@ -35,6 +35,15 @@ class _PasswordViewState extends State<PasswordView> {
   final FocusNode _focus = FocusNode(debugLabel: 'password');
 
   @override
+  void initState() {
+    super.initState();
+    // The field has the keyboard at once (the window's own focus would keep it otherwise).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focus.requestFocus();
+    });
+  }
+
+  @override
   void didUpdateWidget(PasswordView old) {
     super.didUpdateWidget(old);
     // A wrong password: the field is emptied, the focus stays.
@@ -93,7 +102,6 @@ class _PasswordViewState extends State<PasswordView> {
                 key: const ValueKey('password field'),
                 controller: _text,
                 focusNode: _focus,
-                autofocus: true,
                 secure: true,
                 width: PreviewMetrics.passwordField.width,
                 placeholder: l.passwordPlaceholder,

@@ -202,6 +202,18 @@ void main() {
       expect(doc.annots, hasLength(1));
     });
 
+    test('the highlight button marks the selection', () async {
+      await c.open([pdfFile('a.pdf', book(1))]);
+      await c.loadText(0);
+      c.select(0, 0, 4);
+      c.toggleHighlighting();
+      await pumpEventQueue();
+      expect(backend.opened.single.annots, hasLength(1));
+      expect(c.highlighting, isTrue);
+      c.toggleHighlighting();
+      expect(c.highlighting, isFalse);
+    });
+
     test('underline and colours from the menu, a note, removal', () async {
       await c.open([pdfFile('a.pdf', book(1))]);
       await c.loadText(0);
