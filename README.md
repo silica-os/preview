@@ -18,8 +18,8 @@
   <img alt="status: alpha" src="https://img.shields.io/badge/status-alpha-8a8a8a?style=flat-square">
 </p>
 
-A Flutter app for the [Silica desktop](https://github.com/silica-linux/silica-desktop), built on
-[`silica_ui`](https://github.com/silica-linux/silica-ui) like the other Silica apps.
+A Flutter app for the [Silica desktop](https://github.com/silica-os/silica-desktop), built on
+[`silica_ui`](https://github.com/silica-os/silica-ui) like the other Silica apps.
 App id `dev.frascella.Preview`, icon `photo-viewer` from silica-icons. In Italian: Anteprima.
 
 - **Images:** PNG, JPEG, GIF (animated), WebP, BMP, TIFF (pure Dart) and SVG (as vectors).

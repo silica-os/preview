@@ -14,7 +14,7 @@ never crash, everything is a command, measured parity, English everywhere). On t
 ## Work
 
 - Plan and bugs: the issues of this repository and the Silica board
-  (https://github.com/orgs/silica-linux/projects/1).
+  (https://github.com/orgs/silica-os/projects/1).
 - Before every commit: `dart format --set-exit-if-changed lib test`,
   `flutter analyze --fatal-infos`, `flutter test`, `tool/check_assets.sh`. One task per commit.
 - Every user action is a `preview.*` command, declared once in `lib/src/ui/menus.dart` and

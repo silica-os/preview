@@ -1,7 +1,7 @@
 // Decoding images. PNG, JPEG, GIF (animated too), WebP and BMP go through the engine's codecs;
 // TIFF through the pure-Dart `image` package in a background isolate; SVG through flutter_svg
 // (drawn as vectors, sharp at every zoom). HEIC is recognised but not decoded (no decoder is
-// available on Silica OS without the HEVC plugin: silica-linux/preview issues).
+// available on Silica OS without the HEVC plugin: silica-os/preview issues).
 
 import 'dart:async';
 import 'dart:io';
