@@ -1,6 +1,8 @@
 // The scrolling, zooming area shared by images and PDF pages: content larger than the window
-// scrolls both ways, smaller content sits in the middle on the canvas colour. Pinch on a
-// trackpad and ⌘-scroll (or Ctrl-scroll) zoom around the pointer.
+// scrolls both ways, smaller content sits in the middle on the canvas colour (#2f2d2c around
+// images and #2b2927 behind pages in dark, white and #fcfcfc in light). The area runs under the
+// glass toolbar: its content starts below the band ([ZoomInset]) and scrolls up under it.
+// Pinch on a trackpad and ⌘-scroll (or Ctrl-scroll) zoom around the pointer.
 
 import 'dart:math' as math;
 
@@ -12,16 +14,33 @@ import 'package:silica_ui/silica_ui.dart';
 import '../model/viewer.dart';
 import '../style.dart';
 
+/// How far below the top of the view the content starts: the toolbar band, and the find bar or
+/// the markup toolbar when shown.
+class ZoomInset extends InheritedWidget {
+  const ZoomInset({super.key, required this.top, required super.child});
+  final double top;
+
+  static double of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ZoomInset>()?.top ?? 0;
+
+  @override
+  bool updateShouldNotify(ZoomInset old) => old.top != top;
+}
+
 /// Pinch and ⌘-scroll zoom over `child`, at the pointer.
 class ZoomGestures extends StatefulWidget {
   const ZoomGestures({
     super.key,
     required this.controller,
     required this.child,
+    this.top = 0,
   });
 
   final ViewerController controller;
   final Widget child;
+
+  /// The view's points start this far down (focal points are given below it).
+  final double top;
 
   @override
   State<ZoomGestures> createState() => _ZoomGesturesState();
@@ -40,7 +59,7 @@ class _ZoomGesturesState extends State<ZoomGestures> {
       GestureBinding.instance.pointerSignalResolver.register(event, (e) {
         widget.controller.zoomBy(
           (e as PointerScaleEvent).scale,
-          focal: e.localPosition,
+          focal: e.localPosition - Offset(0, widget.top),
         );
       });
       return;
@@ -51,7 +70,7 @@ class _ZoomGesturesState extends State<ZoomGestures> {
       final scroll = e as PointerScrollEvent;
       widget.controller.zoomBy(
         math.exp(-scroll.scrollDelta.dy / PreviewMetrics.scrollZoomPoints),
-        focal: scroll.localPosition,
+        focal: scroll.localPosition - Offset(0, widget.top),
       );
     });
   }
@@ -62,7 +81,10 @@ class _ZoomGesturesState extends State<ZoomGestures> {
     onPointerPanZoomStart: (_) => _lastScale = 1,
     onPointerPanZoomUpdate: (e) {
       if (e.scale == _lastScale || e.scale <= 0) return;
-      widget.controller.zoomBy(e.scale / _lastScale, focal: e.localPosition);
+      widget.controller.zoomBy(
+        e.scale / _lastScale,
+        focal: e.localPosition - Offset(0, widget.top),
+      );
       _lastScale = e.scale;
     },
     child: widget.child,
@@ -71,7 +93,9 @@ class _ZoomGesturesState extends State<ZoomGestures> {
 
 /// The scroll area: `content` (sized by the controller's [ViewerController.contentSize])
 /// centred when smaller than the view, scrolling when larger. With [vertical] the child is
-/// the vertical scroll view itself (the continuous PDF layout, built lazily).
+/// the vertical scroll view itself (the continuous PDF layout, built lazily); it must put
+/// [ZoomInset] above its first item. The view the controller fits into is the area below the
+/// inset.
 class ZoomScroller extends StatelessWidget {
   const ZoomScroller({
     super.key,
@@ -91,11 +115,13 @@ class ZoomScroller extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = PreviewColors.of(context);
+    final top = ZoomInset.of(context);
     return ColoredBox(
-      color: colors.canvas,
+      color: controller.isPdf ? colors.pdfCanvas : colors.imageCanvas,
       child: LayoutBuilder(
         builder: (context, box) {
-          final view = box.biggest;
+          final full = box.biggest;
+          final view = Size(full.width, math.max(0, full.height - top));
           controller.setViewport(view);
           final content = controller.contentSize;
           final width = math.max(view.width, content.width);
@@ -106,15 +132,16 @@ class ZoomScroller extends StatelessWidget {
           final inner = vertical
               ? SizedBox(
                   width: width,
-                  height: view.height,
+                  height: full.height,
                   child: builder(context, view),
                 )
               : SizedBox(
                   width: width,
-                  height: view.height,
+                  height: full.height,
                   child: SingleChildScrollView(
                     key: const ValueKey('vertical scroll'),
                     controller: controller.vertical,
+                    padding: EdgeInsets.only(top: top),
                     child: SizedBox(
                       width: width,
                       height: height,
@@ -130,6 +157,7 @@ class ZoomScroller extends StatelessWidget {
                 );
           return ZoomGestures(
             controller: controller,
+            top: top,
             child: ScrollConfiguration(
               behavior: behavior,
               child: SilicaScrollbar(

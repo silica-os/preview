@@ -9,6 +9,7 @@ import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:silica_ui/silica_ui.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -32,11 +33,15 @@ class PreviewApp extends StatefulWidget {
     this.locale,
     this.onController,
     this.exporter = exportImage,
+    this.screenSize = systemScreenSize,
   });
 
   final DocumentLoader loader;
   final FileDialogs dialogs;
   final Exporter exporter;
+
+  /// The screen's size (tests give one).
+  final ScreenSize screenSize;
 
   /// The files from the command line, for the first window.
   final List<String> files;
@@ -68,6 +73,8 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _lifecycle;
+    // Dates in the inspector, in every language.
+    unawaited(initializeDateFormatting());
   }
 
   @override
@@ -111,6 +118,7 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
                           files: files,
                           onController: widget.onController,
                           exporter: widget.exporter,
+                          screenSize: widget.screenSize,
                         );
                       },
                     ),
@@ -147,11 +155,13 @@ class _Window extends StatefulWidget {
     required this.files,
     this.onController,
     this.exporter = exportImage,
+    this.screenSize = systemScreenSize,
   });
 
   final DocumentLoader loader;
   final FileDialogs dialogs;
   final Exporter exporter;
+  final ScreenSize screenSize;
   final List<String> files;
   final ValueChanged<ViewerController>? onController;
 
@@ -180,7 +190,9 @@ class _WindowState extends State<_Window> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    // Closing the window saves the changes (there is no question to answer, as on the
+    // reference), then lets go of the document.
+    unawaited(_controller.saveAndDispose());
     super.dispose();
   }
 
@@ -192,5 +204,6 @@ class _WindowState extends State<_Window> {
     active: _ActiveScope.of(context),
     onOpenCancelled: () => unawaited(SilicaApp.closeWindow()),
     exporter: widget.exporter,
+    screenSize: widget.screenSize,
   );
 }

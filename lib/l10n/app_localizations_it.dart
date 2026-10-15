@@ -416,4 +416,469 @@ class AppLocalizationsIt extends AppLocalizations {
   String pageLabel(int page) {
     return '$page';
   }
+
+  @override
+  String get addBookmark => 'Aggiungi segnalibro';
+
+  @override
+  String get removeBookmark => 'Rimuovi segnalibro';
+
+  @override
+  String get addNote => 'Aggiungi nota';
+
+  @override
+  String get adjustSize => 'Cambia dimensioni…';
+
+  @override
+  String get allowPrinting => 'Stampa';
+
+  @override
+  String get allowCopying => 'Copia di testo e immagini';
+
+  @override
+  String get allowAssembling =>
+      'Inserimento, eliminazione e rotazione delle pagine';
+
+  @override
+  String get allowAnnotating => 'Aggiunta di annotazioni e firme';
+
+  @override
+  String get allowForms => 'Compilazione dei moduli';
+
+  @override
+  String get alpha => 'Mantieni la trasparenza';
+
+  @override
+  String get annotate => 'Annotazioni';
+
+  @override
+  String get apply => 'Applica';
+
+  @override
+  String get autoSize => 'Adatta automaticamente';
+
+  @override
+  String get back => 'Indietro';
+
+  @override
+  String get forward => 'Avanti';
+
+  @override
+  String get blankPage => 'Pagina bianca';
+
+  @override
+  String get bookmarks => 'Segnalibri';
+
+  @override
+  String get borderColour => 'Colore del contorno';
+
+  @override
+  String get fillColour => 'Colore di riempimento';
+
+  @override
+  String get closeImage => 'Chiudi';
+
+  @override
+  String get closeWindow => 'Chiudi la finestra';
+
+  @override
+  String get colourYellow => 'Giallo';
+
+  @override
+  String get colourGreen => 'Verde';
+
+  @override
+  String get colourBlue => 'Blu';
+
+  @override
+  String get colourPink => 'Rosa';
+
+  @override
+  String get colourPurple => 'Viola';
+
+  @override
+  String get columnPage => 'Pagina';
+
+  @override
+  String get columnType => 'Tipo';
+
+  @override
+  String get columnAuthor => 'Autore';
+
+  @override
+  String get columnDate => 'Data';
+
+  @override
+  String get contactSheet => 'Griglia di pagine';
+
+  @override
+  String get custom => 'Personalizzata';
+
+  @override
+  String get dashed => 'Tratteggiata';
+
+  @override
+  String get delete => 'Elimina';
+
+  @override
+  String get deletePage => 'Elimina la pagina';
+
+  @override
+  String documentsTotal(int documents, int pages) {
+    return '$documents documenti, $pages pagine in tutto';
+  }
+
+  @override
+  String get done => 'Fine';
+
+  @override
+  String get edited => 'Modificato';
+
+  @override
+  String withEdited(String line) {
+    return '$line — Modificato';
+  }
+
+  @override
+  String get editPermissions => 'Cambia i permessi…';
+
+  @override
+  String get exportAs => 'Esporta come…';
+
+  @override
+  String get exportAsPdf => 'Esporta in PDF…';
+
+  @override
+  String get fileSizeLabel => 'Dimensioni del file:';
+
+  @override
+  String get findMenu => 'Trova';
+
+  @override
+  String get fitInto => 'Adatta a:';
+
+  @override
+  String get widthLabel => 'Larghezza:';
+
+  @override
+  String get heightLabel => 'Altezza:';
+
+  @override
+  String foundOnPages(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Trovato in $count pagine',
+      one: 'Trovato in 1 pagina',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get showMarkupToolbar => 'Mostra gli strumenti di annotazione';
+
+  @override
+  String get hideMarkupToolbar => 'Nascondi gli strumenti di annotazione';
+
+  @override
+  String get showToolbar => 'Mostra la barra degli strumenti';
+
+  @override
+  String get hideToolbar => 'Nascondi la barra degli strumenti';
+
+  @override
+  String get highlightsAndNotes => 'Evidenziazioni e note';
+
+  @override
+  String get highlightText => 'Evidenzia il testo';
+
+  @override
+  String get underlineText => 'Sottolinea il testo';
+
+  @override
+  String get strikethroughText => 'Barra il testo';
+
+  @override
+  String get highlightTooltip => 'Evidenzia';
+
+  @override
+  String get markupTooltip => 'Annotazioni';
+
+  @override
+  String get inspectorTooltip => 'Informazioni';
+
+  @override
+  String get viewMenuTooltip => 'Vista';
+
+  @override
+  String get zoomTooltip => 'Zoom';
+
+  @override
+  String get infoModified => 'Modificato';
+
+  @override
+  String get insert => 'Inserisci';
+
+  @override
+  String get inspectorGeneral => 'Generali';
+
+  @override
+  String get inspectorMore => 'Altre informazioni';
+
+  @override
+  String get inspectorKeywords => 'Parole chiave';
+
+  @override
+  String get inspectorAnnotations => 'Annotazioni';
+
+  @override
+  String get kindHighlight => 'Evidenziazione';
+
+  @override
+  String get underline => 'Sottolineatura';
+
+  @override
+  String get strikethrough => 'Barratura';
+
+  @override
+  String get note => 'Nota';
+
+  @override
+  String get revertTo => 'Torna a';
+
+  @override
+  String get lastOpened => 'Ultima apertura…';
+
+  @override
+  String get revert => 'Ripristina';
+
+  @override
+  String get revertTitle => 'Tornare al file com’era all’apertura?';
+
+  @override
+  String get revertMessage => 'Le modifiche fatte da allora andranno perse.';
+
+  @override
+  String get revertFailed => 'Impossibile ripristinare il file.';
+
+  @override
+  String get nameLabel => 'Nome:';
+
+  @override
+  String get whereLabel => 'Posizione:';
+
+  @override
+  String get newKeyword => 'Nuova parola chiave';
+
+  @override
+  String get noKeywords => 'Nessuna parola chiave';
+
+  @override
+  String get pageUp => 'Pagina su';
+
+  @override
+  String get pageDown => 'Pagina giù';
+
+  @override
+  String get previousDocument => 'Documento precedente';
+
+  @override
+  String get nextDocument => 'Documento successivo';
+
+  @override
+  String get previousItem => 'Elemento precedente';
+
+  @override
+  String get nextItem => 'Elemento successivo';
+
+  @override
+  String pageNumber(int page) {
+    return 'Pagina $page';
+  }
+
+  @override
+  String get passwordProtected =>
+      'Questo documento è protetto da una password.';
+
+  @override
+  String get passwordEnter => 'Inserisci la password per aprirlo.';
+
+  @override
+  String get passwordInvalid => 'La password non è corretta.';
+
+  @override
+  String get passwordMissing =>
+      'Inserisci una password per aprire il documento.';
+
+  @override
+  String get passwordsDiffer => 'Le due password non coincidono.';
+
+  @override
+  String get ownerPasswordMissing =>
+      'Per limitare le operazioni serve una password del proprietario.';
+
+  @override
+  String get ownerPassword => 'Password del proprietario';
+
+  @override
+  String get permissions => 'Consentito';
+
+  @override
+  String get permissionsButton => 'Permessi…';
+
+  @override
+  String get requirePassword => 'Chiedi una password per aprire il documento';
+
+  @override
+  String get verify => 'Ripeti';
+
+  @override
+  String get pixelsPerInch => 'pixel/pollice';
+
+  @override
+  String get resolution => 'Risoluzione:';
+
+  @override
+  String get scaleProportionally => 'Mantieni le proporzioni';
+
+  @override
+  String get resultingSize => 'Dimensioni risultanti';
+
+  @override
+  String resultingDetail(String percent, String before, String after) {
+    return '$percent %, $before prima, circa $after dopo';
+  }
+
+  @override
+  String get redo => 'Ripeti';
+
+  @override
+  String get undo => 'Annulla';
+
+  @override
+  String get removeHighlight => 'Rimuovi l’evidenziazione';
+
+  @override
+  String get removeNote => 'Rimuovi la nota';
+
+  @override
+  String get renameCommand => 'Rinomina…';
+
+  @override
+  String renameFailed(Object name) {
+    return 'Impossibile usare “$name”: esiste già un file con questo nome, oppure la cartella non è scrivibile.';
+  }
+
+  @override
+  String resultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count risultati',
+      one: '1 risultato',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get saveCommand => 'Salva';
+
+  @override
+  String get saveFailed => 'Impossibile salvare le modifiche.';
+
+  @override
+  String get shadow => 'Ombra';
+
+  @override
+  String get shapes => 'Forme';
+
+  @override
+  String get shapeLine => 'Linea';
+
+  @override
+  String get shapeArrow => 'Freccia';
+
+  @override
+  String get shapeRectangle => 'Rettangolo';
+
+  @override
+  String get shapeRoundedRectangle => 'Rettangolo arrotondato';
+
+  @override
+  String get shapeOval => 'Ovale';
+
+  @override
+  String get shapeBubble => 'Nuvoletta';
+
+  @override
+  String get shapeStar => 'Stella';
+
+  @override
+  String get shapePolygon => 'Poligono';
+
+  @override
+  String get shapeText => 'Casella di testo';
+
+  @override
+  String get shapeStyle => 'Stile della forma';
+
+  @override
+  String get textStyle => 'Stile del testo';
+
+  @override
+  String get textColour => 'Colore';
+
+  @override
+  String get textPlaceholder => 'Testo';
+
+  @override
+  String get slideshow => 'Presentazione';
+
+  @override
+  String get sortBy => 'Ordina per';
+
+  @override
+  String get sortName => 'Nome';
+
+  @override
+  String get sortPath => 'Cartella';
+
+  @override
+  String get sortDate => 'Data';
+
+  @override
+  String get sortSize => 'Dimensioni';
+
+  @override
+  String get sortKind => 'Tipo';
+
+  @override
+  String get sortNone => 'Ordine di apertura';
+
+  @override
+  String get sortRank => 'Risultati';
+
+  @override
+  String get sortPage => 'Pagina';
+
+  @override
+  String get unitPixels => 'pixel';
+
+  @override
+  String get unitPercent => 'percentuale';
+
+  @override
+  String get unitInches => 'pollici';
+
+  @override
+  String get unitCentimetres => 'cm';
+
+  @override
+  String get unitMillimetres => 'mm';
+
+  @override
+  String get unitPoints => 'punti';
+
+  @override
+  String get useSelectionForFind => 'Cerca la selezione';
 }

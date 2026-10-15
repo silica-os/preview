@@ -16,6 +16,7 @@ import 'support/samples.dart';
 
 void main() {
   late FakePdfBackend backend;
+  late FakePdfWriter writer;
   late ViewerController c;
   late String dirPath;
 
@@ -30,7 +31,10 @@ void main() {
     final dir = tempDir(addTearDown);
     dirPath = dir.path;
     backend = FakePdfBackend({});
-    c = ViewerController(loader: DocumentLoader(pdf: backend));
+    writer = FakePdfWriter();
+    c = ViewerController(
+      loader: DocumentLoader(pdf: backend, writer: writer),
+    )..animate = false;
     addTearDown(c.dispose);
   });
 
@@ -52,11 +56,13 @@ void main() {
     expect(c.count, 3);
     expect(c.layout, PageLayout.continuous);
     expect(c.zoomMode, ZoomMode.fitWidth);
-    c.setViewport(const Size(624, 500));
-    // (624 − 2 × 12) / 300.
+    // With the thumbnails (the outline is not asked for by the file).
+    expect(c.sidebar, SidebarMode.thumbnails);
+    c.setViewport(const Size(628, 500));
+    // (628 − 2 × 14) / 300.
     expect(c.scale, closeTo(2, 1e-9));
-    expect(c.pageTop(1), 12 + 400 * 2 + PreviewMetrics.pageGap);
-    expect(c.contentSize.width, 624);
+    expect(c.pageTop(1), 14 + 400 * 2 + 17);
+    expect(c.contentSize.width, 628);
     expect(c.pageAtOffset(c.pageTop(2) + 5), 2);
     expect(c.hasOutline, isTrue);
   });
@@ -69,46 +75,76 @@ void main() {
     expect(c.current, 4);
     expect(c.canGoForward, isFalse);
     c.setLayout(PageLayout.two);
-    expect(c.current, 4);
-    expect(c.spreadPages(c.current), [4]);
-    c.goTo(3);
-    expect(c.current, 2);
-    expect(c.spreadPages(c.current), [2, 3]);
+    // A book: the first page alone, then 2–3, 4–5.
+    expect(c.current, 3);
+    expect(c.spreadPages(c.current), [3, 4]);
+    c.goTo(2);
+    expect(c.current, 1);
+    expect(c.spreadPages(c.current), [1, 2]);
     c.previous();
     expect(c.current, 0);
+    expect(c.spreadPages(0), [0]);
     expect(c.canGoBack, isFalse);
     c.next();
-    expect(c.current, 2);
+    expect(c.current, 1);
+    expect(c.spreadPages(c.current), [1, 2]);
     expect(c.zoomMode, ZoomMode.fit);
   });
 
-  test('zoom steps, actual size, fit and the limits', () async {
+  test('zoom steps of actual size, the fitted width, the limits', () async {
     await c.open([pdfFile('a.pdf', book(1))]);
-    c.setViewport(const Size(324, 424));
-    c.setLayout(PageLayout.single);
-    c.zoomToFit();
-    expect(c.scale, closeTo(1, 1e-9));
-    c.zoomIn();
-    expect(c.scale, closeTo(PreviewMetrics.zoomStep, 1e-9));
-    c.zoomOut();
-    c.zoomOut();
-    expect(c.scale, closeTo(1 / PreviewMetrics.zoomStep, 1e-9));
+    c.setViewport(const Size(628, 424));
+    // Continuous: fitted to the width, (628 − 2 × 14) / 300 = 2.
+    expect(c.scale, closeTo(2, 1e-9));
     c.actualSize();
     expect(c.scale, 1);
+    expect(c.atActualSize, isTrue);
+    c.zoomIn();
+    expect(c.scale, closeTo(1.5, 1e-9));
+    // The fitted width is a stop between the steps.
+    c.zoomIn();
+    expect(c.scale, closeTo(2, 1e-9));
+    c.zoomIn();
+    expect(c.scale, closeTo(3, 1e-9));
+    c.zoomOut();
+    c.zoomOut();
+    c.zoomOut();
+    c.zoomOut();
+    expect(c.scale, closeTo(0.75, 1e-9));
     c.zoomTo(1000);
     expect(c.scale, PreviewMetrics.maxZoom);
     expect(c.canZoomIn, isFalse);
     c.zoomBy(1e-9);
     expect(c.scale, PreviewMetrics.minZoom);
+    expect(c.canZoomOut, isFalse);
   });
 
-  test('rotation turns every page of a PDF', () async {
-    await c.open([pdfFile('a.pdf', book(2))]);
+  test('a PDF at actual size is its physical size on the display', () async {
+    await c.open([pdfFile('a.pdf', book(1))]);
+    c.displayPpi = 107;
+    expect(c.actualScale, closeTo(107 / 72, 1e-9));
+    c.actualSize();
+    expect(c.scale, closeTo(107 / 72, 1e-9));
+    expect(c.percent, 100);
+    expect(c.maxScale, closeTo(30 * 107 / 72, 1e-9));
+  });
+
+  test('rotation turns the current page (both pages of a spread)', () async {
+    await c.open([pdfFile('a.pdf', book(3))]);
     c.rotateRight();
     expect(c.pdf!.pageSize(0), const Size(400, 300));
+    expect(c.pdf!.pageSize(1), const Size(300, 400));
+    expect(c.edited, isTrue);
     c.rotateLeft();
     c.rotateLeft();
-    expect(c.pdf!.quarterTurns, 3);
+    expect(c.pdf!.turnsOf(0), 3);
+    c.undo();
+    c.undo();
+    expect(c.pdf!.turnsOf(0), 1);
+    c.setLayout(PageLayout.two);
+    c.goTo(1);
+    c.rotateRight();
+    expect([for (var i = 0; i < 3; i++) c.pdf!.turnsOf(i)], [1, 1, 1]);
     expect(c.canFlip, isFalse);
   });
 

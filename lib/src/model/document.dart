@@ -6,9 +6,12 @@ import 'dart:ui' show Size;
 
 import 'package:exif/exif.dart';
 
+import '../export/export.dart' show detectTransparency;
 import '../images/decode.dart';
 import '../images/formats.dart';
 import '../pdf/backend.dart';
+import '../pdf/qpdf.dart';
+import 'markup.dart';
 
 /// The last path component.
 String baseName(String path) {
@@ -38,9 +41,14 @@ class ImageItem {
     required this.fileSize,
     required this.colour,
     this.exif = const [],
+    this.transparent = false,
   });
 
-  final String path;
+  /// Whether some pixels are not opaque (the export offers to keep the transparency).
+  final bool transparent;
+
+  /// The file; it changes when the file is renamed.
+  String path;
   final FileFormat format;
   final ImageContent content;
   final int fileSize;
@@ -52,10 +60,19 @@ class ImageItem {
   bool flipHorizontal = false;
   bool flipVertical = false;
 
+  /// The size chosen with Adjust Size, null: the file's.
+  Size? resized;
+
+  /// Shapes and text drawn over the image, in its own pixels.
+  final List<MarkupShape> markup = [];
+
   String get name => baseName(path);
 
-  /// The image's own size.
-  Size get size => content.size;
+  /// The image's size in pixels, after Adjust Size.
+  Size get size => resized ?? content.size;
+
+  /// The size it is written at.
+  Size get pixelSize => size;
 
   /// The size on screen with its rotation.
   Size get turnedSize =>
@@ -63,25 +80,105 @@ class ImageItem {
 
   bool get transformed => quarterTurns != 0 || flipHorizontal || flipVertical;
 
+  /// Anything to write: a turn, a flip, a new size, markup.
+  bool get changed => transformed || resized != null || markup.isNotEmpty;
+
+  /// Whether Preview can write the image back in its own format (edits are saved to the
+  /// file); other formats are only viewed rotated or flipped, and exported.
+  bool get writable => switch (format) {
+    FileFormat.png ||
+    FileFormat.jpeg ||
+    FileFormat.bmp ||
+    FileFormat.tiff ||
+    FileFormat.gif ||
+    FileFormat.webp =>
+      content is RasterContent && (content as RasterContent).frames == 1,
+    _ => false,
+  };
+
   void dispose() => content.dispose();
 }
 
-/// A PDF of a window; the rotation applies to every page.
-class PdfItem {
-  PdfItem({required this.path, required this.handle, required this.fileSize});
+/// A page of a window's PDF: a page of the open file ([source]) or a blank page inserted by the
+/// user, with the quarter turns added in Preview and whether it is bookmarked. Pages can be
+/// moved, removed and inserted; the file is written when the document is saved.
+class PdfPage {
+  PdfPage.source(int this.source, this.size, {this.bookmarked = false});
+  PdfPage.blank(this.size) : source = null, bookmarked = false;
 
-  final String path;
+  /// The page of the file (0-based), null for a blank page.
+  final int? source;
+
+  /// Its own size in points, with the file's rotation.
+  final Size size;
+
+  /// Quarter turns clockwise added by the user (0–3).
+  int quarterTurns = 0;
+  bool bookmarked;
+
+  bool get isBlank => source == null;
+
+  /// The size on screen.
+  Size get turnedSize =>
+      quarterTurns.isOdd ? Size(size.height, size.width) : size;
+
+  PdfPage copy() {
+    final out = source == null
+        ? PdfPage.blank(size)
+        : PdfPage.source(source!, size, bookmarked: bookmarked);
+    return out
+      ..quarterTurns = quarterTurns
+      ..bookmarked = bookmarked;
+  }
+}
+
+/// A PDF of a window.
+class PdfItem {
+  PdfItem({
+    required this.path,
+    required this.handle,
+    required this.fileSize,
+    this.password,
+  }) : pages = [
+         for (final (i, size) in handle.pageSizes.indexed)
+           PdfPage.source(i, size),
+       ];
+
+  /// The file; it changes when the file is renamed.
+  String path;
   final PdfDocumentHandle handle;
   final int fileSize;
-  int quarterTurns = 0;
+
+  /// The password it was opened with (to write it again).
+  final String? password;
+
+  /// Its encryption and permissions as read (null: not encrypted), and as chosen with Edit
+  /// Permissions (written on save).
+  PdfSecurity? security;
+  PdfSecurity? newSecurity;
+
+  /// The pages as shown, in order.
+  final List<PdfPage> pages;
 
   String get name => baseName(path);
-  int get pageCount => handle.pageCount;
+  int get pageCount => pages.length;
 
-  /// The size of page `i` on screen, with the rotation.
-  Size pageSize(int i) {
-    final s = handle.pageSizes[i];
-    return quarterTurns.isOdd ? Size(s.height, s.width) : s;
+  /// The size of page `i` on screen, with its rotation.
+  Size pageSize(int i) => pages[i].turnedSize;
+
+  /// The size of page `i` before Preview's rotation.
+  Size ownSize(int i) => pages[i].size;
+
+  /// The quarter turns of page `i`.
+  int turnsOf(int i) => pages[i].quarterTurns;
+
+  /// Whether the pages are those of the file, in order, unturned and unmarked.
+  bool get pagesUnchanged {
+    if (pages.length != handle.pageCount) return false;
+    for (final (i, p) in pages.indexed) {
+      if (p.source != i || p.quarterTurns != 0) return false;
+    }
+    return true;
   }
 }
 
@@ -92,8 +189,13 @@ sealed class Document {
 }
 
 class ImageDocument extends Document {
-  ImageDocument(this.images);
+  ImageDocument(List<ImageItem> images)
+    : images = [...images],
+      opened = List.unmodifiable(images);
   final List<ImageItem> images;
+
+  /// The images in the order they were opened.
+  final List<ImageItem> opened;
 
   @override
   String get title => images.first.name;
@@ -103,7 +205,7 @@ class ImageDocument extends Document {
 
   @override
   void dispose() {
-    for (final i in images) {
+    for (final i in opened) {
       i.dispose();
     }
   }
@@ -138,8 +240,11 @@ class OpenException implements Exception {
 
 /// Reads files into documents. The PDF backend is given (a fake in tests).
 class DocumentLoader {
-  const DocumentLoader({required this.pdf});
+  const DocumentLoader({required this.pdf, this.writer});
   final PdfBackend pdf;
+
+  /// Rewrites PDFs (pages, bookmarks, keywords, encryption); null: PDFs are only annotated.
+  final PdfWriter? writer;
 
   /// The format of the file at `path`. Throws [OpenException].
   Future<(FileFormat, int)> probe(String path) async {
@@ -192,6 +297,7 @@ class DocumentLoader {
       fileSize: bytes.length,
       colour: colour,
       exif: await readExif(bytes, format),
+      transparent: colour.alpha && await detectTransparency(content),
     );
   }
 
@@ -200,7 +306,27 @@ class DocumentLoader {
     final (_, size) = await probe(path);
     try {
       final handle = await pdf.open(path, password: password);
-      return PdfItem(path: path, handle: handle, fileSize: size);
+      final item = PdfItem(
+        path: path,
+        handle: handle,
+        fileSize: size,
+        password: password,
+      );
+      // Bookmarks and the permissions are read with the writer.
+      final writer = this.writer;
+      if (writer != null) {
+        try {
+          final extras = await writer.read(path, password: password);
+          for (final i in extras.bookmarks) {
+            if (i >= 0 && i < item.pages.length)
+              item.pages[i].bookmarked = true;
+          }
+          item.security = extras.security;
+        } on PdfWriteException {
+          // Without qpdf or with an unreadable structure: no bookmarks, nothing else lost.
+        }
+      }
+      return item;
     } on PdfOpenException catch (e) {
       throw OpenException(path, switch (e.failure) {
         PdfOpenFailure.encrypted => OpenFailure.encrypted,

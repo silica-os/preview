@@ -249,5 +249,206 @@
         "type": "int"
       }
     }
-  }
+  },
+  "addBookmark": "Add Bookmark",
+  "removeBookmark": "Remove Bookmark",
+  "addNote": "Add Note",
+  "adjustSize": "Adjust Size…",
+  "allowPrinting": "Printing",
+  "allowCopying": "Copying text and images",
+  "allowAssembling": "Inserting, deleting and rotating pages",
+  "allowAnnotating": "Adding annotations and signatures",
+  "allowForms": "Filling in forms",
+  "alpha": "Keep transparency",
+  "annotate": "Annotate",
+  "apply": "Apply",
+  "autoSize": "Fit Automatically",
+  "back": "Back",
+  "forward": "Forward",
+  "blankPage": "Blank Page",
+  "bookmarks": "Bookmarks",
+  "borderColour": "Border Colour",
+  "fillColour": "Fill Colour",
+  "closeImage": "Close",
+  "closeWindow": "Close Window",
+  "colourYellow": "Yellow",
+  "colourGreen": "Green",
+  "colourBlue": "Blue",
+  "colourPink": "Pink",
+  "colourPurple": "Purple",
+  "columnPage": "Page",
+  "columnType": "Kind",
+  "columnAuthor": "Author",
+  "columnDate": "Date",
+  "contactSheet": "Contact Sheet",
+  "custom": "Custom",
+  "dashed": "Dashed",
+  "delete": "Delete",
+  "deletePage": "Delete Page",
+  "documentsTotal": "{documents} documents, {pages} pages in all",
+  "@documentsTotal": {
+    "placeholders": {
+      "documents": {
+        "type": "int"
+      },
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
+  "done": "Done",
+  "edited": "Edited",
+  "withEdited": "{line} — Edited",
+  "@withEdited": {
+    "placeholders": {
+      "line": {
+        "type": "String"
+      }
+    }
+  },
+  "editPermissions": "Edit Permissions…",
+  "exportAs": "Export As…",
+  "exportAsPdf": "Export as PDF…",
+  "fileSizeLabel": "File size:",
+  "findMenu": "Find",
+  "fitInto": "Fit into:",
+  "widthLabel": "Width:",
+  "heightLabel": "Height:",
+  "foundOnPages": "{count, plural, =1{Found on 1 page} other{Found on {count} pages}}",
+  "@foundOnPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showMarkupToolbar": "Show Markup Toolbar",
+  "hideMarkupToolbar": "Hide Markup Toolbar",
+  "showToolbar": "Show Toolbar",
+  "hideToolbar": "Hide Toolbar",
+  "highlightsAndNotes": "Highlights and Notes",
+  "highlightText": "Highlight Text",
+  "underlineText": "Underline Text",
+  "strikethroughText": "Strike Through Text",
+  "highlightTooltip": "Highlight",
+  "markupTooltip": "Markup",
+  "inspectorTooltip": "Inspector",
+  "viewMenuTooltip": "View",
+  "zoomTooltip": "Zoom",
+  "infoModified": "Modified",
+  "insert": "Insert",
+  "inspectorGeneral": "General",
+  "inspectorMore": "More Info",
+  "inspectorKeywords": "Keywords",
+  "inspectorAnnotations": "Annotations",
+  "kindHighlight": "Highlight",
+  "underline": "Underline",
+  "strikethrough": "Strikethrough",
+  "note": "Note",
+  "revertTo": "Revert To",
+  "lastOpened": "Last Opened…",
+  "revert": "Revert",
+  "revertTitle": "Go back to the file as it was opened?",
+  "revertMessage": "The changes made since then will be lost.",
+  "revertFailed": "The file couldn't be reverted.",
+  "nameLabel": "Name:",
+  "whereLabel": "Where:",
+  "newKeyword": "New keyword",
+  "noKeywords": "No Keywords",
+  "pageUp": "Page Up",
+  "pageDown": "Page Down",
+  "previousDocument": "Previous Document",
+  "nextDocument": "Next Document",
+  "previousItem": "Previous Item",
+  "nextItem": "Next Item",
+  "pageNumber": "Page {page}",
+  "@pageNumber": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "passwordProtected": "This document is locked with a password.",
+  "passwordEnter": "Type the password to open it.",
+  "passwordInvalid": "That password is not right.",
+  "passwordMissing": "Type a password to open the document.",
+  "passwordsDiffer": "The two passwords are not the same.",
+  "ownerPasswordMissing": "Restricting what can be done needs an owner password.",
+  "ownerPassword": "Owner password",
+  "permissions": "Allowed",
+  "permissionsButton": "Permissions…",
+  "requirePassword": "Ask for a password to open the document",
+  "verify": "Again",
+  "pixelsPerInch": "pixels/inch",
+  "resolution": "Resolution:",
+  "scaleProportionally": "Keep proportions",
+  "resultingSize": "Resulting size",
+  "resultingDetail": "{percent} %, {before} before, about {after} after",
+  "@resultingDetail": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "before": {
+        "type": "String"
+      },
+      "after": {
+        "type": "String"
+      }
+    }
+  },
+  "redo": "Redo",
+  "undo": "Undo",
+  "removeHighlight": "Remove Highlight",
+  "removeNote": "Remove Note",
+  "renameCommand": "Rename…",
+  "renameFailed": "“{name}” can't be used: a file with that name is already there, or the folder can't be written.",
+  "@renameFailed": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "resultCount": "{count, plural, =1{1 match} other{{count} matches}}",
+  "@resultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "saveCommand": "Save",
+  "saveFailed": "The changes couldn't be saved.",
+  "shadow": "Shadow",
+  "shapes": "Shapes",
+  "shapeLine": "Line",
+  "shapeArrow": "Arrow",
+  "shapeRectangle": "Rectangle",
+  "shapeRoundedRectangle": "Rounded Rectangle",
+  "shapeOval": "Oval",
+  "shapeBubble": "Speech Balloon",
+  "shapeStar": "Star",
+  "shapePolygon": "Polygon",
+  "shapeText": "Text Box",
+  "shapeStyle": "Shape Style",
+  "textStyle": "Text Style",
+  "textColour": "Colour",
+  "textPlaceholder": "Text",
+  "slideshow": "Slideshow",
+  "sortBy": "Sort By",
+  "sortName": "Name",
+  "sortPath": "Folder",
+  "sortDate": "Date",
+  "sortSize": "Size",
+  "sortKind": "Kind",
+  "sortNone": "As Opened",
+  "sortRank": "Matches",
+  "sortPage": "Page",
+  "unitPixels": "pixels",
+  "unitPercent": "percent",
+  "unitInches": "inches",
+  "unitCentimetres": "cm",
+  "unitMillimetres": "mm",
+  "unitPoints": "points",
+  "useSelectionForFind": "Use Selection for Find"
 }

@@ -120,14 +120,8 @@ void main() {
 
     test('JPEG with a quality, flipped', () async {
       item.flipHorizontal = true;
-      final best = await encodeShown(
-        item,
-        const ExportOptions(ExportFormat.jpeg, quality: 1),
-      );
-      final least = await encodeShown(
-        item,
-        const ExportOptions(ExportFormat.jpeg, quality: 0),
-      );
+      final best = await encodeShown(item, Encoding.jpeg, quality: 1);
+      final least = await encodeShown(item, Encoding.jpeg, quality: 0);
       final back = img.decodeJpg(best)!;
       expect((back.width, back.height), (4, 2));
       expect(back.getPixel(0, 0).b, greaterThan(200));

@@ -811,6 +811,876 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{page}'**
   String pageLabel(int page);
+
+  /// No description provided for @addBookmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Bookmark'**
+  String get addBookmark;
+
+  /// No description provided for @removeBookmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Bookmark'**
+  String get removeBookmark;
+
+  /// No description provided for @addNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Note'**
+  String get addNote;
+
+  /// No description provided for @adjustSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust Size…'**
+  String get adjustSize;
+
+  /// No description provided for @allowPrinting.
+  ///
+  /// In en, this message translates to:
+  /// **'Printing'**
+  String get allowPrinting;
+
+  /// No description provided for @allowCopying.
+  ///
+  /// In en, this message translates to:
+  /// **'Copying text and images'**
+  String get allowCopying;
+
+  /// No description provided for @allowAssembling.
+  ///
+  /// In en, this message translates to:
+  /// **'Inserting, deleting and rotating pages'**
+  String get allowAssembling;
+
+  /// No description provided for @allowAnnotating.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding annotations and signatures'**
+  String get allowAnnotating;
+
+  /// No description provided for @allowForms.
+  ///
+  /// In en, this message translates to:
+  /// **'Filling in forms'**
+  String get allowForms;
+
+  /// No description provided for @alpha.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep transparency'**
+  String get alpha;
+
+  /// No description provided for @annotate.
+  ///
+  /// In en, this message translates to:
+  /// **'Annotate'**
+  String get annotate;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @autoSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit Automatically'**
+  String get autoSize;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @forward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get forward;
+
+  /// No description provided for @blankPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Blank Page'**
+  String get blankPage;
+
+  /// No description provided for @bookmarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarks'**
+  String get bookmarks;
+
+  /// No description provided for @borderColour.
+  ///
+  /// In en, this message translates to:
+  /// **'Border Colour'**
+  String get borderColour;
+
+  /// No description provided for @fillColour.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill Colour'**
+  String get fillColour;
+
+  /// No description provided for @closeImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeImage;
+
+  /// No description provided for @closeWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Window'**
+  String get closeWindow;
+
+  /// No description provided for @colourYellow.
+  ///
+  /// In en, this message translates to:
+  /// **'Yellow'**
+  String get colourYellow;
+
+  /// No description provided for @colourGreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get colourGreen;
+
+  /// No description provided for @colourBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get colourBlue;
+
+  /// No description provided for @colourPink.
+  ///
+  /// In en, this message translates to:
+  /// **'Pink'**
+  String get colourPink;
+
+  /// No description provided for @colourPurple.
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get colourPurple;
+
+  /// No description provided for @columnPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get columnPage;
+
+  /// No description provided for @columnType.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get columnType;
+
+  /// No description provided for @columnAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Author'**
+  String get columnAuthor;
+
+  /// No description provided for @columnDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get columnDate;
+
+  /// No description provided for @contactSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Sheet'**
+  String get contactSheet;
+
+  /// No description provided for @custom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get custom;
+
+  /// No description provided for @dashed.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashed'**
+  String get dashed;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @deletePage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Page'**
+  String get deletePage;
+
+  /// No description provided for @documentsTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{documents} documents, {pages} pages in all'**
+  String documentsTotal(int documents, int pages);
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @edited.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited'**
+  String get edited;
+
+  /// No description provided for @withEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'{line} — Edited'**
+  String withEdited(String line);
+
+  /// No description provided for @editPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Permissions…'**
+  String get editPermissions;
+
+  /// No description provided for @exportAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Export As…'**
+  String get exportAs;
+
+  /// No description provided for @exportAsPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Export as PDF…'**
+  String get exportAsPdf;
+
+  /// No description provided for @fileSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'File size:'**
+  String get fileSizeLabel;
+
+  /// No description provided for @findMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Find'**
+  String get findMenu;
+
+  /// No description provided for @fitInto.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit into:'**
+  String get fitInto;
+
+  /// No description provided for @widthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Width:'**
+  String get widthLabel;
+
+  /// No description provided for @heightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Height:'**
+  String get heightLabel;
+
+  /// No description provided for @foundOnPages.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Found on 1 page} other{Found on {count} pages}}'**
+  String foundOnPages(int count);
+
+  /// No description provided for @showMarkupToolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Markup Toolbar'**
+  String get showMarkupToolbar;
+
+  /// No description provided for @hideMarkupToolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Markup Toolbar'**
+  String get hideMarkupToolbar;
+
+  /// No description provided for @showToolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Toolbar'**
+  String get showToolbar;
+
+  /// No description provided for @hideToolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide Toolbar'**
+  String get hideToolbar;
+
+  /// No description provided for @highlightsAndNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlights and Notes'**
+  String get highlightsAndNotes;
+
+  /// No description provided for @highlightText.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight Text'**
+  String get highlightText;
+
+  /// No description provided for @underlineText.
+  ///
+  /// In en, this message translates to:
+  /// **'Underline Text'**
+  String get underlineText;
+
+  /// No description provided for @strikethroughText.
+  ///
+  /// In en, this message translates to:
+  /// **'Strike Through Text'**
+  String get strikethroughText;
+
+  /// No description provided for @highlightTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight'**
+  String get highlightTooltip;
+
+  /// No description provided for @markupTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Markup'**
+  String get markupTooltip;
+
+  /// No description provided for @inspectorTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspector'**
+  String get inspectorTooltip;
+
+  /// No description provided for @viewMenuTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get viewMenuTooltip;
+
+  /// No description provided for @zoomTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom'**
+  String get zoomTooltip;
+
+  /// No description provided for @infoModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get infoModified;
+
+  /// No description provided for @insert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert'**
+  String get insert;
+
+  /// No description provided for @inspectorGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get inspectorGeneral;
+
+  /// No description provided for @inspectorMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More Info'**
+  String get inspectorMore;
+
+  /// No description provided for @inspectorKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Keywords'**
+  String get inspectorKeywords;
+
+  /// No description provided for @inspectorAnnotations.
+  ///
+  /// In en, this message translates to:
+  /// **'Annotations'**
+  String get inspectorAnnotations;
+
+  /// No description provided for @kindHighlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight'**
+  String get kindHighlight;
+
+  /// No description provided for @underline.
+  ///
+  /// In en, this message translates to:
+  /// **'Underline'**
+  String get underline;
+
+  /// No description provided for @strikethrough.
+  ///
+  /// In en, this message translates to:
+  /// **'Strikethrough'**
+  String get strikethrough;
+
+  /// No description provided for @note.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get note;
+
+  /// No description provided for @revertTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert To'**
+  String get revertTo;
+
+  /// No description provided for @lastOpened.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Opened…'**
+  String get lastOpened;
+
+  /// No description provided for @revert.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert'**
+  String get revert;
+
+  /// No description provided for @revertTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back to the file as it was opened?'**
+  String get revertTitle;
+
+  /// No description provided for @revertMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The changes made since then will be lost.'**
+  String get revertMessage;
+
+  /// No description provided for @revertFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file couldn\'t be reverted.'**
+  String get revertFailed;
+
+  /// No description provided for @nameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name:'**
+  String get nameLabel;
+
+  /// No description provided for @whereLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Where:'**
+  String get whereLabel;
+
+  /// No description provided for @newKeyword.
+  ///
+  /// In en, this message translates to:
+  /// **'New keyword'**
+  String get newKeyword;
+
+  /// No description provided for @noKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'No Keywords'**
+  String get noKeywords;
+
+  /// No description provided for @pageUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Up'**
+  String get pageUp;
+
+  /// No description provided for @pageDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Down'**
+  String get pageDown;
+
+  /// No description provided for @previousDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Document'**
+  String get previousDocument;
+
+  /// No description provided for @nextDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Document'**
+  String get nextDocument;
+
+  /// No description provided for @previousItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Item'**
+  String get previousItem;
+
+  /// No description provided for @nextItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Item'**
+  String get nextItem;
+
+  /// No description provided for @pageNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page}'**
+  String pageNumber(int page);
+
+  /// No description provided for @passwordProtected.
+  ///
+  /// In en, this message translates to:
+  /// **'This document is locked with a password.'**
+  String get passwordProtected;
+
+  /// No description provided for @passwordEnter.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the password to open it.'**
+  String get passwordEnter;
+
+  /// No description provided for @passwordInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'That password is not right.'**
+  String get passwordInvalid;
+
+  /// No description provided for @passwordMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a password to open the document.'**
+  String get passwordMissing;
+
+  /// No description provided for @passwordsDiffer.
+  ///
+  /// In en, this message translates to:
+  /// **'The two passwords are not the same.'**
+  String get passwordsDiffer;
+
+  /// No description provided for @ownerPasswordMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Restricting what can be done needs an owner password.'**
+  String get ownerPasswordMissing;
+
+  /// No description provided for @ownerPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner password'**
+  String get ownerPassword;
+
+  /// No description provided for @permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed'**
+  String get permissions;
+
+  /// No description provided for @permissionsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions…'**
+  String get permissionsButton;
+
+  /// No description provided for @requirePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a password to open the document'**
+  String get requirePassword;
+
+  /// No description provided for @verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Again'**
+  String get verify;
+
+  /// No description provided for @pixelsPerInch.
+  ///
+  /// In en, this message translates to:
+  /// **'pixels/inch'**
+  String get pixelsPerInch;
+
+  /// No description provided for @resolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolution:'**
+  String get resolution;
+
+  /// No description provided for @scaleProportionally.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep proportions'**
+  String get scaleProportionally;
+
+  /// No description provided for @resultingSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Resulting size'**
+  String get resultingSize;
+
+  /// No description provided for @resultingDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} %, {before} before, about {after} after'**
+  String resultingDetail(String percent, String before, String after);
+
+  /// No description provided for @redo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get redo;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @removeHighlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Highlight'**
+  String get removeHighlight;
+
+  /// No description provided for @removeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Note'**
+  String get removeNote;
+
+  /// No description provided for @renameCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename…'**
+  String get renameCommand;
+
+  /// No description provided for @renameFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” can\'t be used: a file with that name is already there, or the folder can\'t be written.'**
+  String renameFailed(Object name);
+
+  /// No description provided for @resultCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 match} other{{count} matches}}'**
+  String resultCount(int count);
+
+  /// No description provided for @saveCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveCommand;
+
+  /// No description provided for @saveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The changes couldn\'t be saved.'**
+  String get saveFailed;
+
+  /// No description provided for @shadow.
+  ///
+  /// In en, this message translates to:
+  /// **'Shadow'**
+  String get shadow;
+
+  /// No description provided for @shapes.
+  ///
+  /// In en, this message translates to:
+  /// **'Shapes'**
+  String get shapes;
+
+  /// No description provided for @shapeLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Line'**
+  String get shapeLine;
+
+  /// No description provided for @shapeArrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow'**
+  String get shapeArrow;
+
+  /// No description provided for @shapeRectangle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rectangle'**
+  String get shapeRectangle;
+
+  /// No description provided for @shapeRoundedRectangle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounded Rectangle'**
+  String get shapeRoundedRectangle;
+
+  /// No description provided for @shapeOval.
+  ///
+  /// In en, this message translates to:
+  /// **'Oval'**
+  String get shapeOval;
+
+  /// No description provided for @shapeBubble.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech Balloon'**
+  String get shapeBubble;
+
+  /// No description provided for @shapeStar.
+  ///
+  /// In en, this message translates to:
+  /// **'Star'**
+  String get shapeStar;
+
+  /// No description provided for @shapePolygon.
+  ///
+  /// In en, this message translates to:
+  /// **'Polygon'**
+  String get shapePolygon;
+
+  /// No description provided for @shapeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Box'**
+  String get shapeText;
+
+  /// No description provided for @shapeStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shape Style'**
+  String get shapeStyle;
+
+  /// No description provided for @textStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Style'**
+  String get textStyle;
+
+  /// No description provided for @textColour.
+  ///
+  /// In en, this message translates to:
+  /// **'Colour'**
+  String get textColour;
+
+  /// No description provided for @textPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get textPlaceholder;
+
+  /// No description provided for @slideshow.
+  ///
+  /// In en, this message translates to:
+  /// **'Slideshow'**
+  String get slideshow;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort By'**
+  String get sortBy;
+
+  /// No description provided for @sortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get sortName;
+
+  /// No description provided for @sortPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get sortPath;
+
+  /// No description provided for @sortDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get sortDate;
+
+  /// No description provided for @sortSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get sortSize;
+
+  /// No description provided for @sortKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get sortKind;
+
+  /// No description provided for @sortNone.
+  ///
+  /// In en, this message translates to:
+  /// **'As Opened'**
+  String get sortNone;
+
+  /// No description provided for @sortRank.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches'**
+  String get sortRank;
+
+  /// No description provided for @sortPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get sortPage;
+
+  /// No description provided for @unitPixels.
+  ///
+  /// In en, this message translates to:
+  /// **'pixels'**
+  String get unitPixels;
+
+  /// No description provided for @unitPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'percent'**
+  String get unitPercent;
+
+  /// No description provided for @unitInches.
+  ///
+  /// In en, this message translates to:
+  /// **'inches'**
+  String get unitInches;
+
+  /// No description provided for @unitCentimetres.
+  ///
+  /// In en, this message translates to:
+  /// **'cm'**
+  String get unitCentimetres;
+
+  /// No description provided for @unitMillimetres.
+  ///
+  /// In en, this message translates to:
+  /// **'mm'**
+  String get unitMillimetres;
+
+  /// No description provided for @unitPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'points'**
+  String get unitPoints;
+
+  /// No description provided for @useSelectionForFind.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Selection for Find'**
+  String get useSelectionForFind;
 }
 
 class _AppLocalizationsDelegate

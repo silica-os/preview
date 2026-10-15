@@ -6,6 +6,7 @@ import 'package:silica_ui/silica_ui.dart';
 import 'src/args.dart';
 import 'src/model/document.dart';
 import 'src/pdf/poppler.dart';
+import 'src/pdf/qpdf.dart';
 import 'src/portal.dart';
 import 'src/style.dart';
 import 'src/ui/app.dart';
@@ -20,7 +21,12 @@ void main(List<String> args) {
   SilicaApp.quitWhenLastWindowCloses = false;
   runApp(
     PreviewApp(
-      loader: const DocumentLoader(pdf: PopplerBackend()),
+      loader: DocumentLoader(
+        pdf: const PopplerBackend(),
+        // Without qpdf PDFs are still annotated; pages, bookmarks and permissions are not
+        // offered.
+        writer: QpdfWriter.available ? const QpdfWriter() : null,
+      ),
       dialogs: PortalFileDialogs(),
       files: filesFromArgs(args),
     ),

@@ -1,7 +1,11 @@
-// An image in the window: at the controller's scale, rotated and flipped, animated when it has
-// several frames (GIF, WebP), drawn as vectors when it is an SVG.
+// An image in the window: at the controller's scale, rotated and flipped (the turn animates in
+// about 220 ms, a flip in about 185 ms, PREVIEW-02 › Markup), with its markup; animated when it
+// has several frames (GIF, WebP: the reference shows a GIF's frames as pages and does not play
+// it; Preview plays it), drawn as vectors when it is an SVG (the reference does not open SVG;
+// Preview does).
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
@@ -9,32 +13,99 @@ import 'package:flutter/widgets.dart';
 import '../images/decode.dart';
 import '../model/document.dart';
 import '../model/viewer.dart';
+import '../style.dart';
+import 'markup_view.dart';
 import 'zoom_view.dart';
 
-class ImageView extends StatelessWidget {
-  const ImageView({super.key, required this.controller});
+class ImageView extends StatefulWidget {
+  const ImageView({super.key, required this.controller, this.markup = false});
   final ViewerController controller;
+
+  /// The markup toolbar is shown: shapes can be chosen, moved and resized.
+  final bool markup;
+
+  @override
+  State<ImageView> createState() => _ImageViewState();
+}
+
+class _ImageViewState extends State<ImageView>
+    with SingleTickerProviderStateMixin {
+  // Rotate and flip animate (≈ 220 ms and ≈ 185 ms).
+  late final AnimationController _turn = AnimationController(
+    vsync: this,
+    value: 1,
+  )..addListener(() => setState(() {}));
+  late int _turns = widget.controller.turnCount;
+
+  @override
+  void didUpdateWidget(ImageView old) {
+    super.didUpdateWidget(old);
+    final c = widget.controller;
+    if (c.turnCount != _turns) {
+      _turns = c.turnCount;
+      _turn.duration = c.lastFlip
+          ? PreviewMetrics.flipAnimation
+          : PreviewMetrics.rotateAnimation;
+      unawaited(_turn.forward(from: 0));
+    }
+  }
+
+  @override
+  void dispose() {
+    _turn.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final item = controller.image;
+    final c = widget.controller;
+    final item = c.image;
     if (item == null) return const SizedBox.expand();
+    final t = Curves.easeInOut.transform(_turn.value);
     return ZoomScroller(
-      controller: controller,
-      builder: (context, _) => ShownImage(
-        key: ValueKey(item.path),
-        item: item,
-        scale: controller.scale,
-      ),
+      controller: c,
+      builder: (context, _) {
+        Widget shown = ShownImage(
+          key: ValueKey(item.path),
+          item: item,
+          scale: c.scale,
+          overlay: MarkupLayer(
+            controller: c,
+            item: item,
+            scale: c.scale,
+            interactive: widget.markup && item.writable,
+          ),
+        );
+        if (t < 1) {
+          shown = c.lastFlip
+              ? Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.diagonal3Values(-1 + 2 * t, 1, 1),
+                  child: shown,
+                )
+              : Transform.rotate(
+                  angle: -c.lastTurn * (1 - t) * math.pi / 2,
+                  child: shown,
+                );
+        }
+        return shown;
+      },
     );
   }
 }
 
-/// `item` at `scale`, with its rotation and flips.
+/// `item` at `scale`, with its rotation and flips, its markup drawn over it (or `overlay`,
+/// which draws it and handles it).
 class ShownImage extends StatelessWidget {
-  const ShownImage({super.key, required this.item, required this.scale});
+  const ShownImage({
+    super.key,
+    required this.item,
+    required this.scale,
+    this.overlay,
+  });
   final ImageItem item;
   final double scale;
+  final Widget? overlay;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +118,16 @@ class ShownImage extends StatelessWidget {
         child: SizedBox(
           width: size.width,
           height: size.height,
-          child: ImageContentView(content: item.content, scale: scale),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ImageContentView(content: item.content, scale: scale),
+              if (overlay != null)
+                overlay!
+              else if (item.markup.isNotEmpty)
+                CustomPaint(painter: MarkupPainter(item, null)),
+            ],
+          ),
         ),
       ),
     );
