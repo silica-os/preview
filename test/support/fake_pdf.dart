@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:ui' show Offset, Rect, Size;
 
 import 'package:preview/src/pdf/backend.dart';
+import 'package:preview/src/pdf/qpdf.dart';
 
 class FakePage {
   const FakePage({this.size = const Size(300, 400), this.lines = const []});
@@ -215,4 +216,51 @@ class FakeDocument implements PdfDocumentHandle {
 
   @override
   Future<void> close() async => closed = true;
+}
+
+/// A writer that records what it is asked: each write's pages, target, security and keywords.
+/// `read` answers from [extras] by path (nothing marked by default).
+class FakePdfWriter implements PdfWriter {
+  final List<
+    ({
+      List<PageSpec> pages,
+      String out,
+      PdfSecurity? security,
+      String? keywords,
+    })
+  >
+  writes = [];
+  final Map<String, PdfExtras> extras = {};
+
+  /// Set to make every call fail with it.
+  PdfWriteException? failure;
+
+  @override
+  Future<void> write(
+    List<PageSpec> pages,
+    String out, {
+    PdfSecurity? security,
+    String? keywords,
+  }) async {
+    if (failure case final f?) throw f;
+    writes.add((
+      pages: pages,
+      out: out,
+      security: security,
+      keywords: keywords,
+    ));
+    extras[out] = PdfExtras(
+      bookmarks: [
+        for (final (i, p) in pages.indexed)
+          if (p.bookmarked) i,
+      ],
+      security: security == null || security.isOpen ? null : security,
+    );
+  }
+
+  @override
+  Future<PdfExtras> read(String path, {String? password}) async {
+    if (failure case final f?) throw f;
+    return extras[path] ?? const PdfExtras();
+  }
 }
