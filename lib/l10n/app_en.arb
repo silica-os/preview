@@ -1,0 +1,253 @@
+{
+  "@@locale": "en",
+  "appName": "Preview",
+  "menuFile": "File",
+  "menuEdit": "Edit",
+  "menuView": "View",
+  "menuGo": "Go",
+  "menuTools": "Tools",
+  "open": "Open…",
+  "export": "Export…",
+  "copy": "Copy",
+  "selectAll": "Select All",
+  "find": "Find…",
+  "findNext": "Find Next",
+  "findPrevious": "Find Previous",
+  "hideSidebar": "Hide Sidebar",
+  "thumbnails": "Thumbnails",
+  "tableOfContents": "Table of Contents",
+  "continuousScroll": "Continuous Scroll",
+  "singlePage": "Single Page",
+  "twoPages": "Two Pages",
+  "actualSize": "Actual Size",
+  "zoomToFit": "Zoom to Fit",
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out",
+  "previousPage": "Previous Page",
+  "nextPage": "Next Page",
+  "firstPage": "First Page",
+  "lastPage": "Last Page",
+  "previousImage": "Previous Image",
+  "nextImage": "Next Image",
+  "goToPage": "Go to Page…",
+  "rotateLeft": "Rotate Left",
+  "rotateRight": "Rotate Right",
+  "flipHorizontal": "Flip Horizontal",
+  "flipVertical": "Flip Vertical",
+  "showInspector": "Show Inspector",
+  "hideInspector": "Hide Inspector",
+  "sidebarTooltip": "Sidebar",
+  "viewOptionsTooltip": "View options",
+  "rotateTooltip": "Rotate",
+  "searchTooltip": "Search",
+  "searchPlaceholder": "Search",
+  "searchClear": "Clear",
+  "searching": "Searching…",
+  "noMatches": "Not found",
+  "emptyTitle": "No document",
+  "ok": "OK",
+  "cancel": "Cancel",
+  "openButton": "Open",
+  "go": "Go",
+  "save": "Save…",
+  "openDialogTitle": "Open",
+  "exportDialogTitle": "Export",
+  "dialogUnavailable": "The file dialog isn't available.",
+  "dialogUnavailableDetail": "Silica's file chooser portal did not answer.",
+  "passwordMessage": "Enter the password to open it.",
+  "passwordWrong": "The password is incorrect. Try again.",
+  "passwordPlaceholder": "Password",
+  "goToTitle": "Go to Page",
+  "format": "Format:",
+  "quality": "Quality:",
+  "qualityLeast": "Least",
+  "qualityBest": "Best",
+  "exportFailed": "The image couldn't be exported.",
+  "inspectorTitle": "General Info",
+  "infoName": "Name",
+  "infoKind": "Kind",
+  "infoSize": "File size",
+  "infoDimensions": "Dimensions",
+  "infoColour": "Color model",
+  "infoDepth": "Depth",
+  "infoAlpha": "Alpha channel",
+  "infoFrames": "Frames",
+  "infoPages": "Pages",
+  "infoPageSize": "Page size",
+  "infoVersion": "Version",
+  "infoTitle": "Title",
+  "infoAuthor": "Author",
+  "infoSubject": "Subject",
+  "infoCreator": "Creator",
+  "infoProducer": "Producer",
+  "infoExif": "EXIF",
+  "yes": "Yes",
+  "no": "No",
+  "kindPdf": "PDF document",
+  "colourRgb": "RGB",
+  "colourGray": "Gray",
+  "colourCmyk": "CMYK",
+  "colourIndexed": "Indexed",
+  "colourVector": "Vector",
+  "colourUnknown": "Unknown",
+  "exifImageMake": "Make",
+  "exifImageModel": "Model",
+  "exifLensModel": "Lens",
+  "exifDateTimeOriginal": "Date taken",
+  "exifExposureTime": "Exposure",
+  "exifFNumber": "F-number",
+  "exifISOSpeedRatings": "ISO",
+  "exifFocalLength": "Focal length",
+  "exifFlash": "Flash",
+  "exifImageSoftware": "Software",
+  "openFailedTitle": "{count, plural, =1{The file couldn't be opened} other{{count} files couldn't be opened}}",
+  "@openFailedTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "failMissing": "“{name}” doesn't exist or can't be read.",
+  "@failMissing": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "failUnsupported": "“{name}” is in a format Preview can't open.",
+  "@failUnsupported": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "failDamaged": "“{name}” may be damaged.",
+  "@failDamaged": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "failNoPdf": "“{name}” needs the PDF library (poppler-glib), which isn't installed.",
+  "@failNoPdf": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "failOnePdf": "“{name}”: Preview opens one PDF per window.",
+  "@failOnePdf": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "pageOf": "Page {page} of {count}",
+  "@pageOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "imageOf": "{index} of {count}",
+  "@imageOf": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pixels": "{width} × {height} pixels",
+  "@pixels": {
+    "placeholders": {
+      "width": {
+        "type": "int"
+      },
+      "height": {
+        "type": "int"
+      }
+    }
+  },
+  "points": "{width} × {height} pt",
+  "@points": {
+    "placeholders": {
+      "width": {
+        "type": "String"
+      },
+      "height": {
+        "type": "String"
+      }
+    }
+  },
+  "bits": "{bits} bits per channel",
+  "@bits": {
+    "placeholders": {
+      "bits": {
+        "type": "int"
+      }
+    }
+  },
+  "matches": "{count, plural, =1{1 match} other{{count} matches}}",
+  "@matches": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "matchOf": "{index} of {count}",
+  "@matchOf": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "passwordTitle": "“{name}” is protected with a password.",
+  "@passwordTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "goToMessage": "Page number (1–{count}):",
+  "@goToMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exportTitle": "Export “{name}”",
+  "@exportTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "kindImage": "{format} image",
+  "@kindImage": {
+    "placeholders": {
+      "format": {}
+    }
+  },
+  "fileSize": "{size} ({bytes} bytes)",
+  "@fileSize": {
+    "placeholders": {
+      "size": {},
+      "bytes": {}
+    }
+  },
+  "pageLabel": "{page}",
+  "@pageLabel": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  }
+}
