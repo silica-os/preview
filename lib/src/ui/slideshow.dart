@@ -5,7 +5,7 @@
 // once. Esc ends it.
 //
 // The reference fills the display with a window of its own; Silica's embedder cannot ask for a
-// full-screen window yet, so the slideshow covers Preview's window.
+// full-screen window yet (silica-desktop#173), so the slideshow covers Preview's window.
 
 import 'dart:async';
 import 'dart:math' as math;

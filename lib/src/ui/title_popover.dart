@@ -1,7 +1,7 @@
 // The title popover (PREVIEW-01 › Title bar and toolbar): 502 × 150, under the title. The name
 // field, with the name selected (Return or closing the popover renames the file), and where the
 // file is. The reference also has tags, a location pop-up that moves the file, and a lock: not
-// in Preview (preview issue on the title popover).
+// in Preview (#16).
 
 import 'package:flutter/widgets.dart';
 import 'package:silica_ui/silica_ui.dart';

@@ -7,8 +7,8 @@
 // window is too narrow the search field becomes a magnifier circle and the tools that do not
 // fit go into an overflow circle with a menu.
 //
-// Not shown in Preview: remove background and form filling (not built), share (no share
-// service in Silica, preview#1).
+// Not shown in Preview: remove background (#19) and form filling (#15), share (no share
+// service in Silica, #1).
 
 import 'dart:math' as math;
 

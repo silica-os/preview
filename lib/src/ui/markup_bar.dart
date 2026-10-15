@@ -7,7 +7,7 @@
 // row of bright colours, a 12 × 10 grid of shades with "none" first), Text Style ▾ (289 × 138:
 // colour, size, bold / italic / underline, alignment). For a PDF: Note. The reference's other
 // tools (selection tools, instant alpha, sketch, sign, adjust colour, image description,
-// redaction, shapes and text on PDFs) are not in Preview yet (preview issues).
+// redaction, shapes and text on PDFs) are not in Preview yet (#12, #13).
 
 import 'package:flutter/widgets.dart';
 import 'package:silica_ui/silica_ui.dart';

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Measured against PREVIEW-01 and PREVIEW-02: window sizes, the toolbar's groups and places, the
+  sidebar (160–400, thumbnails, contents, highlights and notes, bookmarks, search results,
+  contact sheet), zoom steps of actual size, PDF margins and the book layout, colours, motion.
+- Editing: PDF highlights, underlines, strikethroughs and notes (poppler); page rotation,
+  deletion, blank pages, reordering, bookmarks, keywords and permissions (qpdf); image markup and
+  Adjust Size; undo, "Edited", saving on close and ⌘S, Revert.
+- The password in the window, the title popover (rename), the find bar, the inspector pane, the
+  slideshow, the export sheet with TIFF and transparency, menus and context menus as measured.
+- silica_ui 0.30.1; image 4.12.
+
 ## 0.1.0 · 2026-10-15
 
 - First version: images (PNG, JPEG, GIF, WebP, BMP, TIFF, SVG) and PDF documents (poppler-glib

@@ -27,12 +27,12 @@ abstract final class PreviewMetrics {
 
   /// The screen assumed when neither Flutter nor the embedder tells its size (the embedder
   /// reports no display to Flutter yet): a common laptop's logical size. *Provisional*
-  /// (silica-desktop issue on the screen size).
+  /// (silica-desktop#171).
   static const Size fallbackScreen = Size(1440, 900);
 
   /// Where the compositor puts a new document window on the reference (from the left edge and
   /// the top of the screen), and the cascade of the next ones. Silica's compositor places the
-  /// windows; Preview cannot (silica-desktop issue on window placement).
+  /// windows; Preview cannot (silica-desktop#172).
   static const Offset windowOrigin = Offset(4, 34);
   static const double windowCascade = 29;
 

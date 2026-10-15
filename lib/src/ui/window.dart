@@ -67,7 +67,7 @@ Future<Size?> systemScreenSize(BuildContext context) async {
       return Size(w.toDouble(), h.toDouble());
     }
   } on Object {
-    // The embedder does not answer it (yet): silica-desktop issue on the screen size.
+    // The embedder does not answer it (yet): silica-desktop#171.
   }
   return null;
 }

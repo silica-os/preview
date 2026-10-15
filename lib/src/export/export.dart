@@ -1,5 +1,5 @@
 // Writing images: File › Export… (PREVIEW-02 › Files: JPEG, PDF, PNG and TIFF of the
-// reference's formats; HEIC, JPEG 2000 and OpenEXR have no encoder in Silica) and saving an
+// reference's formats; HEIC, JPEG 2000 and OpenEXR have no encoder in Silica, #14) and saving an
 // edited image back in its own format (PNG, JPEG, TIFF, BMP, a single-frame GIF, WebP). The
 // image is written as it is shown: rotated, flipped, resized, with its markup. Encoding runs in
 // a background isolate (the pure Dart `image` package and the PDF writer).
