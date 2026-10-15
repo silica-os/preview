@@ -134,7 +134,13 @@ class PreviewWindowState extends State<PreviewWindow> {
     if (item == null || c.count != 1) return;
     final view = View.maybeOf(context);
     if (view == null) return;
-    final screen = view.display.size / view.display.devicePixelRatio;
+    // Without a display (an embedder that does not report one) the window keeps its size.
+    final Size screen;
+    try {
+      screen = view.display.size / view.display.devicePixelRatio;
+    } on Object {
+      return;
+    }
     if (screen.isEmpty) return;
     final turned = item.turnedSize;
     final limit = Size(
@@ -438,7 +444,7 @@ class PreviewWindowState extends State<PreviewWindow> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final colors = PreviewColors.of(context);
-    final title = c.document?.title ?? l.appName;
+    final title = c.image?.name ?? c.document?.title ?? l.appName;
     return Focus(
       focusNode: _focus,
       autofocus: true,

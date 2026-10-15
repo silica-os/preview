@@ -96,25 +96,27 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
         child: Builder(
           builder: (context) => ColoredBox(
             color: PreviewColors.of(context).window,
-            child: Overlay(
-              initialEntries: [
-                OverlayEntry(
-                  builder: (context) => SilicaAppWindow(
-                    builder: (context) {
-                      final files = _files;
-                      _files = const [];
-                      return _Window(
-                        loader: widget.loader,
-                        dialogs: widget.dialogs,
-                        files: files,
-                        active: _active,
-                        onController: widget.onController,
-                        exporter: widget.exporter,
-                      );
-                    },
+            child: _ActiveScope(
+              active: _active,
+              child: Overlay(
+                initialEntries: [
+                  OverlayEntry(
+                    builder: (context) => SilicaAppWindow(
+                      builder: (context) {
+                        final files = _files;
+                        _files = const [];
+                        return _Window(
+                          loader: widget.loader,
+                          dialogs: widget.dialogs,
+                          files: files,
+                          onController: widget.onController,
+                          exporter: widget.exporter,
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -123,13 +125,26 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
   );
 }
 
+/// Whether the window is the active one: above the overlay, so the window built in an overlay
+/// entry follows it.
+class _ActiveScope extends InheritedWidget {
+  const _ActiveScope({required this.active, required super.child});
+  final bool active;
+
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_ActiveScope>()?.active ??
+      true;
+
+  @override
+  bool updateShouldNotify(_ActiveScope old) => old.active != active;
+}
+
 /// One window with its own controller: built again from scratch on every reopen.
 class _Window extends StatefulWidget {
   const _Window({
     required this.loader,
     required this.dialogs,
     required this.files,
-    required this.active,
     this.onController,
     this.exporter = exportImage,
   });
@@ -138,7 +153,6 @@ class _Window extends StatefulWidget {
   final FileDialogs dialogs;
   final Exporter exporter;
   final List<String> files;
-  final bool active;
   final ValueChanged<ViewerController>? onController;
 
   @override
@@ -175,7 +189,7 @@ class _WindowState extends State<_Window> {
     key: _window,
     controller: _controller,
     dialogs: widget.dialogs,
-    active: widget.active,
+    active: _ActiveScope.of(context),
     onOpenCancelled: () => unawaited(SilicaApp.closeWindow()),
     exporter: widget.exporter,
   );

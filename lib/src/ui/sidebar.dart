@@ -47,7 +47,7 @@ class _Thumbnails extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = PreviewColors.of(context);
     final pages = controller.pages;
-    Widget list = ListView.builder(
+    Widget list() => ListView.builder(
       key: const ValueKey('thumbnails'),
       padding: const EdgeInsets.symmetric(
         vertical: PreviewMetrics.thumbnailGap / 2,
@@ -106,13 +106,12 @@ class _Thumbnails extends StatelessWidget {
         );
       },
     );
-    if (pages != null) {
-      list = ListenableBuilder(
-        listenable: pages,
-        builder: (context, _) => list,
-      );
-    }
-    return list;
+    // Rebuilt from scratch when a page bitmap arrives (an identical widget would be skipped).
+    if (pages == null) return list();
+    return ListenableBuilder(
+      listenable: pages,
+      builder: (context, _) => list(),
+    );
   }
 }
 

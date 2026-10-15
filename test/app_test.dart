@@ -220,7 +220,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('thumbnail 1')));
     await tester.pump();
     expect(text(tester, 'subtitle'), '2 of 2');
-    expect(text(tester, 'title'), 'a.png');
+    expect(text(tester, 'title'), 'b.png');
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.pump();
     expect(c.current, 0);
@@ -255,6 +255,9 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
     expect(c.current, 4);
+    await keys(tester, LogicalKeyboardKey.digit2, option: true);
+    expect(find.byKey(const ValueKey('thumbnail 1')), findsOneWidget);
+    expect(tester.takeException(), isNull);
     await keys(tester, LogicalKeyboardKey.digit3, option: true);
     expect(find.byKey(const ValueKey('contents')), findsOneWidget);
     await tester.tap(find.text('One'));
