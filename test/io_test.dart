@@ -181,12 +181,17 @@ void main() {
       answer = (call) => call.method == 'subscribe'
           ? 3
           : ['/org/freedesktop/portal/desktop/request/1_2/preview1'];
-      final dialogs = PortalFileDialogs(channel: channel);
+      final dialogs = PortalFileDialogs(
+        channel: channel,
+        parentWindow: () async => 'wayland:h4ndle',
+      );
       final result = dialogs.open(title: 'Open');
       await pumpEventQueue();
       final call = calls.last.arguments as Map;
       expect(call['method'], 'OpenFile');
       expect(call['signature'], 'ssa{sv}');
+      // The dialog is attached to Preview's window.
+      expect((call['args'] as List)[0], 'wayland:h4ndle');
       expect((call['args'] as List)[2], containsPair('multiple', true));
       await respond('/org/freedesktop/portal/desktop/request/1_2/preview1', 0, {
         'uris': ['file:///tmp/a%20b.png', 'https://example.com/x'],
@@ -201,6 +206,8 @@ void main() {
       final cancelled = dialogs.save(title: 'Export', name: 'a.png');
       await pumpEventQueue();
       expect((calls.last.arguments as Map)['method'], 'SaveFile');
+      // No handle (an embedder without exportHandle): no parent window.
+      expect(((calls.last.arguments as Map)['args'] as List)[0], '');
       expect(
         ((calls.last.arguments as Map)['args'] as List)[2],
         containsPair('current_name', 'a.png'),

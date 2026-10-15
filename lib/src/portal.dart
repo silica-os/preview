@@ -2,11 +2,14 @@
 // which Silica answers with its own backend (silica-desktop docs/portal.md: Mustache in dialog
 // mode). The bus is reached through the embedder's `silica/dbus` channel, as the other Silica
 // apps do. The portal replies to a call with a request object; the chosen files arrive later in
-// that object's `Response` signal (0 chosen, 1 cancelled, 2 failed).
+// that object's `Response` signal (0 chosen, 1 cancelled, 2 failed). The window asking is the
+// dialog's `parent_window` ("wayland:<handle>", exported by the embedder): the dialog opens
+// over it, stays above it and gives it the focus back when it closes.
 
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:silica_ui/silica_ui.dart';
 
 import 'external.dart';
 
@@ -38,11 +41,17 @@ const String _request = 'org.freedesktop.portal.Request';
 
 /// The dialogs of the desktop portal.
 class PortalFileDialogs implements FileDialogs {
-  PortalFileDialogs({MethodChannel? channel})
-    : _channel = channel ?? _dbus,
-      _mocked = channel != null;
+  PortalFileDialogs({
+    MethodChannel? channel,
+    Future<String?> Function()? parentWindow,
+  }) : _channel = channel ?? _dbus,
+       _parentWindow = parentWindow ?? SilicaWindow.exportHandle,
+       _mocked = channel != null;
 
   final MethodChannel _channel;
+
+  /// The app window's identifier for the portal (`wayland:<handle>`); null without one.
+  final Future<String?> Function() _parentWindow;
 
   /// A channel given by a test (mocked): the guard against real dialogs does not apply.
   final bool _mocked;
@@ -89,6 +98,7 @@ class PortalFileDialogs implements FileDialogs {
     }
     try {
       await _listen();
+      final parent = await _parentWindow() ?? '';
       final token = 'preview${++_tokens}';
       final reply = await _channel.invokeMethod<Object?>('call', {
         'bus': 'session',
@@ -98,7 +108,7 @@ class PortalFileDialogs implements FileDialogs {
         'method': method,
         'signature': 'ssa{sv}',
         'args': [
-          '',
+          parent,
           title,
           {'handle_token': token, 'modal': true, ...options},
         ],
