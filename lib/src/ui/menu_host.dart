@@ -74,30 +74,32 @@ class _PreviewMenuHostState extends State<PreviewMenuHost> {
         ),
         CustomSingleChildLayout(
           delegate: _Layout(widget.anchor),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 4,
-            children: [
-              for (final row in custom)
-                AmalfiGlass(
-                  material: AmalfiMaterials.thick,
-                  radius: AmalfiMenuMetrics.radius,
-                  opaque: true,
-                  kind: AmalfiGlassKind.menu,
-                  child: SizedBox(
-                    height: row.height,
-                    width: row.width,
-                    child: row.builder(context, _close),
+          child: IntrinsicWidth(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 4,
+              children: [
+                for (final row in custom)
+                  AmalfiGlass(
+                    material: AmalfiMaterials.thick,
+                    radius: AmalfiMenuMetrics.radius,
+                    opaque: true,
+                    kind: AmalfiGlassKind.menu,
+                    child: SizedBox(
+                      height: row.height,
+                      width: row.width,
+                      child: row.builder(context, _close),
+                    ),
                   ),
+                AmalfiMenu(
+                  entries: amalfiEntries(widget.entries),
+                  opaque: true,
+                  autofocus: true,
+                  onDismiss: _close,
                 ),
-              AmalfiMenu(
-                entries: amalfiEntries(widget.entries),
-                opaque: true,
-                autofocus: true,
-                onDismiss: _close,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

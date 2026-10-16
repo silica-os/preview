@@ -4,6 +4,15 @@ PREVIEW-01 › Windows and chrome, Sidebar, Motion. Constants: `PreviewMetrics`,
 `PreviewColors` in `lib/src/style.dart`; the size of a new window in
 `lib/src/model/window_size.dart`.
 
+> **Amalfi (UI 1.0.0).** Behaviour, window sizes and timings below are the measured ones. The
+> look and the measures of the chrome (toolbar pieces, sidebars, inspector, colours) are
+> Amalfi's, from the kit page `App · Preview` (silica-design) and the Amalfi design notes in
+> silica-desktop: a flat 52 pt toolbar of pieces (view 72, zoom 104, highlight 72, buttons 40,
+> search 208), nothing scrolls under it; sidebars 160 (200 for search results) with cells 144;
+> the inspector 260; find bar and markup strip 36 pt + 1 pt separator; colours from
+> `App/Preview/*`. `test/kit_test.dart` checks them. The numbers of the tables below that
+> differ are the reference's, kept for the behaviour.
+
 ## Window
 
 | Item | Value | Constant |

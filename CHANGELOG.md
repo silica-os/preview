@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- UI 1.0.0 «Amalfi» (M6): the window is rebuilt on the Amalfi design system and the
+  `App/Preview` palette, light and dark: a flat 52 pt toolbar of pieces with glass action
+  segments, the 160/200 pt sidebars (thumbnails, contents, highlights and notes, bookmarks,
+  search results), the find bar and markup strip, the 260 pt inspector, the contact sheet, the
+  password view, popovers, menus, alerts and the export, permissions and adjust-size sheets.
+  Behaviour and the measured motion are unchanged. silica_ui v1.0.0-alpha.5.
 - Measured against PREVIEW-01 and PREVIEW-02: window sizes, the toolbar's groups and places, the
   sidebar (160–400, thumbnails, contents, highlights and notes, bookmarks, search results,
   contact sheet), zoom steps of actual size, PDF margins and the book layout, colours, motion.
