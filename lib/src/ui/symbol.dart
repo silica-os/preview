@@ -1,10 +1,9 @@
-// Toolbar symbols from silica-icons (`SILICA_ICONS_DIR/symbols/regular`), as the other Silica
-// apps draw them; without the directory (tests, a bare checkout) a text glyph stands in.
-
-import 'dart:io';
+// Symbols from silica-icons (the Icon Kit, Regular weight), drawn with the stroke of their size
+// as `AmalfiSymbol` does for every Silica app; without silica-icons (tests, a bare checkout) a
+// text glyph stands in.
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:silica_ui/silica_ui.dart';
 
 import '../style.dart';
 
@@ -24,26 +23,17 @@ class PreviewSymbol extends StatelessWidget {
   /// The text glyph without silica-icons.
   final String fallback;
 
-  static String? directory = Platform.environment['SILICA_ICONS_DIR'];
-
   @override
-  Widget build(BuildContext context) {
-    final dir = directory;
-    final file = dir == null ? null : File('$dir/symbols/regular/$name.svg');
-    if (file == null || !file.existsSync()) {
-      return SizedBox(
-        width: size,
-        height: size,
-        child: Center(
-          child: Text(fallback, style: previewText(size * 0.8, color: color)),
-        ),
-      );
-    }
-    return SvgPicture.file(
-      file,
+  Widget build(BuildContext context) => AmalfiSymbol(
+    name,
+    size: size,
+    color: color,
+    fallback: SizedBox(
       width: size,
       height: size,
-      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-    );
-  }
+      child: Center(
+        child: Text(fallback, style: previewText(size * 0.8, color: color)),
+      ),
+    ),
+  );
 }

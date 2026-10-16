@@ -160,6 +160,30 @@ void main() {
   String text(WidgetTester tester, String key) =>
       tester.widget<Text>(find.byKey(ValueKey(key))).data!;
 
+  /// The texts of the toolbar's title block: the name, then the second line when there is one.
+  List<String> titleTexts(WidgetTester tester) => [
+    for (final t in tester.widgetList<Text>(
+      find.descendant(
+        of: find.byType(AmalfiTitlePiece),
+        matching: find.byType(Text),
+      ),
+    ))
+      t.data!,
+  ];
+
+  String titleOf(WidgetTester tester) => titleTexts(tester).first;
+
+  String? subtitleOf(WidgetTester tester) {
+    final texts = titleTexts(tester);
+    return texts.length > 1 ? texts[1] : null;
+  }
+
+  /// Presses segment `index` of the action capsule with the key `key` (32 pt segments).
+  Future<void> tapSegment(WidgetTester tester, String key, int index) async {
+    final rect = tester.getRect(find.byKey(ValueKey(key)));
+    await tester.tapAt(Offset(rect.left + 16 + 32.0 * index, rect.center.dy));
+  }
+
   testWidgets(
     'launched without files: the Open dialog, then the empty window',
     (tester) async {
@@ -171,9 +195,9 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('empty open')));
       await settle(tester, () => c.document != null);
       expect(dialogs.openCalls, 2);
-      expect(text(tester, 'title'), 'photo.png');
+      expect(titleOf(tester), 'photo.png');
       // One image: no second line.
-      expect(find.byKey(const ValueKey('subtitle')), findsNothing);
+      expect(subtitleOf(tester), isNull);
       // ⌘O asks again.
       await keys(tester, LogicalKeyboardKey.keyO);
       expect(dialogs.openCalls, 3);
@@ -210,18 +234,18 @@ void main() {
     final c = await pump(tester, size: const Size(1200, 800));
     await openFiles(tester, c, [pdf('book.pdf', book(3))]);
     Rect at(String key) => tester.getRect(find.byKey(ValueKey(key)));
-    // The view menu button: a 50 pt capsule in the 57 pt slot at x 92.
-    expect(at('view menu button').center.dx, closeTo(92 + 57 / 2, 0.5));
-    expect(at('view menu button').width, 50);
-    // The title from x 164.
-    expect(at('title').left, closeTo(164, 0.5));
-    // The zoom group 113 × 38.
-    expect(at('zoom').size, const Size(113, 38));
-    expect(at('highlight').width, 76);
-    // The search field fills the rest, 7 pt from the right edge.
+    // Pieces: the window buttons' slot of 96, the view piece (a 64 × 32 capsule, 4 pt of
+    // padding, 10 from the top), the title block from x 168.
+    expect(at('view menu button'), const Rect.fromLTWH(100, 10, 64, 32));
+    expect(tester.getTopLeft(find.byType(AmalfiTitlePiece)).dx, 168 + 8);
+    // The zoom group is three segments, the highlight group two.
+    expect(at('zoom').size, const Size(96, 32));
+    expect(at('highlight').size, const Size(64, 32));
+    // The search field (200) ends 4 pt of padding and the bar's 16 pt from the right edge.
     final search = at('search field');
-    expect(search.right, closeTo(1200 - 7, 0.5));
-    expect(search.width, greaterThanOrEqualTo(273));
+    expect(search.right, closeTo(1200 - 16 - 4, 0.5));
+    expect(search.width, 200);
+    expect(search.height, 32);
   });
 
   testWidgets('a narrow window: the search circle and the overflow menu', (
@@ -260,11 +284,12 @@ void main() {
     // Actual size is off at 100 %.
     expect(
       tester
-          .widget<ToolbarSegment>(find.byKey(const ValueKey('actual size')))
+          .widget<AmalfiActionSegments>(find.byKey(const ValueKey('zoom')))
+          .segments[1]
           .enabled,
       isFalse,
     );
-    await tester.tap(find.byKey(const ValueKey('zoom in')));
+    await tapSegment(tester, 'zoom', 2);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     // Half way through the 200 ms step.
@@ -272,7 +297,7 @@ void main() {
     expect(c.scale, lessThan(1.5));
     await tester.pump(const Duration(milliseconds: 150));
     expect(c.scale, closeTo(1.5, 1e-9));
-    await tester.tap(find.byKey(const ValueKey('zoom out')));
+    await tapSegment(tester, 'zoom', 0);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
     await keys(tester, LogicalKeyboardKey.minus);
@@ -284,7 +309,7 @@ void main() {
     await keys(tester, LogicalKeyboardKey.digit9);
     // View 1000 × 648: min(1000 / 200, 648 / 100).
     expect(c.scale, closeTo(5, 1e-9));
-    await tester.tap(find.byKey(const ValueKey('actual size')));
+    await tapSegment(tester, 'zoom', 1);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 120));
     expect(c.scale, 1);
@@ -298,7 +323,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('rotate')));
     await tester.pump(const Duration(milliseconds: 300));
     expect(c.image!.quarterTurns, 3);
-    expect(text(tester, 'subtitle'), 'Edited');
+    expect(subtitleOf(tester), 'Edited');
     await keys(tester, LogicalKeyboardKey.keyR);
     await keys(tester, LogicalKeyboardKey.keyR);
     expect(c.image!.quarterTurns, 1);
@@ -317,7 +342,7 @@ void main() {
       await keys(tester, LogicalKeyboardKey.keyZ);
     }
     expect(c.edited, isFalse);
-    expect(find.byKey(const ValueKey('subtitle')), findsNothing);
+    expect(subtitleOf(tester), isNull);
   });
 
   testWidgets('several images: thumbnails, choosing one, hiding the sidebar', (
@@ -326,10 +351,10 @@ void main() {
     final c = await pump(tester);
     await openFiles(tester, c, [png('a.png', 40, 20), png('b.png', 20, 40)]);
     expect(find.byKey(const ValueKey('thumbnails')), findsOneWidget);
-    expect(text(tester, 'subtitle'), '2 documents, 2 pages in all');
+    expect(subtitleOf(tester), '2 documents, 2 pages in all');
     await tester.tap(find.byKey(const ValueKey('thumbnail 1')));
     await tester.pump();
-    expect(text(tester, 'title'), 'b.png');
+    expect(titleOf(tester), 'b.png');
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.pump();
     expect(c.current, 0);
@@ -356,24 +381,24 @@ void main() {
   testWidgets('the view menu: sidebar kinds and the layouts', (tester) async {
     final c = await pump(tester);
     await openFiles(tester, c, [pdf('book.pdf', book(5))]);
-    expect(text(tester, 'subtitle'), 'Page 1 of 5');
+    expect(subtitleOf(tester), 'Page 1 of 5');
     await keys(
       tester,
       LogicalKeyboardKey.arrowDown,
       command: false,
       option: true,
     );
-    expect(text(tester, 'subtitle'), 'Page 2 of 5');
+    expect(subtitleOf(tester), 'Page 2 of 5');
     await keys(tester, LogicalKeyboardKey.keyG, option: true);
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('page field')), '4');
     await tester.tap(find.byKey(const ValueKey('sheet accept')));
     await tester.pumpAndSettle();
-    expect(text(tester, 'subtitle'), 'Page 4 of 5');
+    expect(subtitleOf(tester), 'Page 4 of 5');
     // Back to where Go to Page jumped from.
     await keys(tester, LogicalKeyboardKey.bracketLeft);
     expect(c.current, 1);
-    await tester.tap(find.byKey(const ValueKey('view menu button')));
+    await tapSegment(tester, 'view menu button', 0);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('view menu')), findsOneWidget);
     await choose(tester, 'Two Pages');
@@ -423,7 +448,7 @@ void main() {
     await tester.pump();
     await keys(tester, LogicalKeyboardKey.keyD);
     expect(c.bookmarks, [2]);
-    expect(text(tester, 'subtitle'), 'Page 3 of 3 — Edited');
+    expect(subtitleOf(tester), 'Page 3 of 3 — Edited');
     await keys(tester, LogicalKeyboardKey.digit5, option: true);
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byKey(const ValueKey('bookmark 2')), findsOneWidget);
@@ -455,8 +480,8 @@ void main() {
     expect(find.byKey(const ValueKey('find bar')), findsOneWidget);
     expect(text(tester, 'find status'), 'Found on 1 page');
     expect(find.byKey(const ValueKey('result 2')), findsOneWidget);
-    // The sidebar widens to 199 for the results.
-    expect(tester.getSize(find.byKey(const ValueKey('sidebar'))).width, 199);
+    // The sidebar widens to 200 for the results.
+    expect(tester.getSize(find.byKey(const ValueKey('sidebar'))).width, 200);
     await tester.tap(find.byKey(const ValueKey('find done')));
     await tester.pump(const Duration(milliseconds: 300));
     expect(c.searching, isFalse);
@@ -481,7 +506,7 @@ void main() {
     await tester.pump();
     expect(copied, ['Page']);
     // Highlight it from the toolbar's colour menu: green.
-    await tester.tap(find.byKey(const ValueKey('highlight menu')));
+    await tapSegment(tester, 'highlight', 1);
     await tester.pumpAndSettle();
     await choose(tester, 'Green');
     await settle(tester, () => backend.opened.single.annots.isNotEmpty);
@@ -527,7 +552,7 @@ void main() {
     expect(find.text('Export “photo.png”'), findsOneWidget);
     expect(
       tester.getSize(find.byKey(const ValueKey('export sheet'))).width,
-      406,
+      408,
     );
     expect(find.byKey(const ValueKey('export quality')), findsNothing);
     // The halves sample has no transparency: no alpha check box.
@@ -562,12 +587,12 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('the inspector: a 270 pt pane with four tabs', (tester) async {
+  testWidgets('the inspector: a 260 pt pane with four tabs', (tester) async {
     final c = await pump(tester);
     await openFiles(tester, c, [png('photo.png', 20, 10)]);
     await keys(tester, LogicalKeyboardKey.keyI);
     expect(find.byKey(const ValueKey('inspector')), findsOneWidget);
-    expect(tester.getSize(find.byKey(const ValueKey('inspector'))).width, 270);
+    expect(tester.getSize(find.byKey(const ValueKey('inspector'))).width, 260);
     expect(find.text('20 × 10 pixels'), findsWidgets);
     expect(find.text('PNG image'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('inspector tabs')));
@@ -582,10 +607,10 @@ void main() {
     await openFiles(tester, c, [path]);
     await tester.pump();
     expect(find.byKey(const ValueKey('password view')), findsOneWidget);
-    expect(text(tester, 'title'), 'secret.pdf');
+    expect(titleOf(tester), 'secret.pdf');
     expect(
       tester.getSize(find.byKey(const ValueKey('password field'))),
-      PreviewMetrics.passwordField,
+      const Size(PreviewMetrics.passwordField, 28),
     );
     // The field has the keyboard.
     await tester.pump();
@@ -622,7 +647,7 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('password field')), 'pw');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await settle(tester, () => c.document != null);
-    expect(text(tester, 'title'), 'secret.pdf');
+    expect(titleOf(tester), 'secret.pdf');
   });
 
   testWidgets('the slideshow: the HUD, turning, Esc', (tester) async {
@@ -665,7 +690,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(c.image!.markup.single.kind, ShapeKind.rectangle);
     expect(c.chosenShape, isNotNull);
-    expect(text(tester, 'subtitle'), 'Edited');
+    expect(subtitleOf(tester), 'Edited');
     // The border colour popover colours the chosen shape.
     await tester.tap(find.byKey(const ValueKey('markup border colour')));
     await tester.pumpAndSettle();
@@ -691,8 +716,8 @@ void main() {
     )!.run!();
     await tester.pumpAndSettle();
     expect(
-      tester.getSize(find.byKey(const ValueKey('adjust size sheet'))),
-      PreviewMetrics.adjustSizeSheet,
+      tester.getSize(find.byKey(const ValueKey('adjust size sheet'))).width,
+      PreviewMetrics.adjustSizeWidth,
     );
     await tester.enterText(find.byKey(const ValueKey('adjust width')), '200');
     await tester.pump();
@@ -751,8 +776,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('title block')));
     await tester.pumpAndSettle();
     expect(
-      tester.getSize(find.byKey(const ValueKey('title popover'))),
-      PreviewMetrics.titlePopover,
+      tester.getSize(find.byKey(const ValueKey('title popover'))).width,
+      PreviewMetrics.titlePopover.width - 32,
     );
     // The name field has the keyboard, the name selected.
     final field = tester.widget<EditableText>(
@@ -788,7 +813,7 @@ void main() {
   testWidgets('in Italian', (tester) async {
     final c = await pump(tester, locale: const Locale('it'));
     await openFiles(tester, c, [pdf('libro.pdf', book(3))]);
-    expect(text(tester, 'subtitle'), 'Pagina 1 di 3');
+    expect(subtitleOf(tester), 'Pagina 1 di 3');
   });
 
   group('menu bar model', () {

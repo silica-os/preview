@@ -1,13 +1,14 @@
-// The window's sheets (PREVIEW-02 › Files, PDF features, Markup):
+// The window's sheets (kit `Apps/Preview/Export`, `Permissions`, `Adjust Size`; behaviour from
+// PREVIEW-02 › Files, PDF features, Markup), each an Amalfi dialog card on the window's scrim:
 //
-// - Export: 406 pt wide. The format (JPEG, PDF, PNG, TIFF) with its options: the JPEG quality
-//   slider (182 pt, Least … Best, 0.85 by default), the PNG alpha check box (only for an image
-//   with transparency), the permissions of a PDF; the file size of the result, live; Cancel and
-//   Save (81 × 26). The name and the folder are asked next by the desktop's Save dialog.
-// - Edit Permissions: 339 × 487. A password to open the document (and its confirmation), the
-//   five permissions, and the owner password that guards them.
-// - Adjust Size: 417 × 414, centred on the window. A preset or custom size, width and height
-//   linked when scaling proportionally, the unit, the resolution, and the resulting size.
+// - Export: the format (JPEG, PDF, PNG, TIFF) with its options: the JPEG quality slider (Least
+//   … Best, 0.85 by default), the PNG alpha check box (only for an image with transparency), the
+//   permissions of a PDF; the file size of the result, live; Cancel and Save. The name and the
+//   folder are asked next by the desktop's Save dialog.
+// - Edit Permissions: a password to open the document (and its confirmation), the five
+//   permissions, and the owner password that guards them.
+// - Adjust Size: a preset or custom size, width and height linked when scaling
+//   proportionally, the unit, the resolution, and the resulting size.
 // - Go to Page: the page number.
 
 import 'dart:async';
@@ -23,12 +24,45 @@ import '../model/document.dart';
 import '../pdf/qpdf.dart';
 import '../style.dart';
 import 'inspector.dart' show formatBytes;
+import 'sheet.dart';
 
 /// The chosen export, with the permissions of an exported PDF.
 class ExportChoice extends ExportOptions {
   const ExportChoice(super.format, {super.quality, super.alpha, this.security});
   final PdfSecurity? security;
 }
+
+/// A form row of a sheet: the label at the leading side (right aligned in a [labelWidth] box),
+/// then the control.
+Widget _row(
+  BuildContext context,
+  String label,
+  Widget control, {
+  double labelWidth = 96,
+}) {
+  final colors = AmalfiTheme.of(context).colors;
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      SizedBox(
+        width: labelWidth,
+        child: Text(
+          label,
+          textAlign: TextAlign.right,
+          style: AmalfiType.body(color: colors.textSecondary),
+        ),
+      ),
+      const SizedBox(width: 12),
+      Flexible(
+        child: Align(alignment: Alignment.centerLeft, child: control),
+      ),
+    ],
+  );
+}
+
+/// The footer of a sheet: Cancel, then the default button.
+Widget _footer(Widget cancel, Widget accept) =>
+    AmalfiDialogFooter(actions: [cancel, accept]);
 
 /// The export options; null if cancelled.
 Future<ExportChoice?> showExportSheet(
@@ -40,7 +74,7 @@ Future<ExportChoice?> showExportSheet(
   PdfWriter? writer,
   Future<PdfSecurity?> Function([PdfSecurity? initial])? onPermissions,
   Future<int?> Function(ExportOptions options)? estimate,
-}) => showWindowSheet<ExportChoice>(
+}) => showPreviewSheet<ExportChoice>(
   context,
   semanticLabel: AppLocalizations.of(context).exportDialogTitle,
   builder: (context, sheet) => _ExportSheet(
@@ -122,147 +156,124 @@ class _ExportSheetState extends State<_ExportSheet> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final colors = PreviewColors.of(context);
-    Widget row(String label, Widget control) => Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              textAlign: TextAlign.right,
-              style: previewText(13, color: colors.text),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(child: control),
-        ],
-      ),
-    );
+    final colors = AmalfiTheme.of(context).colors;
     final formats = widget.pdfOnly
         ? const [ExportFormat.pdf]
         : ExportFormat.values;
-    return SizedBox(
+    return KeyedSubtree(
       key: const ValueKey('export sheet'),
-      width: PreviewMetrics.exportWidth,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l.exportTitle(widget.name),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: previewText(
-                13,
-                color: colors.text,
-                weight: FontWeight.w700,
-              ),
+      child: AmalfiDialog(
+        title: l.exportTitle(widget.name),
+        layout: AmalfiDialogLayout.generic,
+        width: PreviewMetrics.exportWidth,
+        children: [
+          _row(
+            context,
+            l.format,
+            AmalfiPopUpButton<ExportFormat>(
+              key: const ValueKey('export format'),
+              width: PreviewMetrics.exportWhere,
+              items: [
+                for (final f in formats)
+                  AmalfiPopUpItem(value: f, label: f.label),
+              ],
+              value: _format,
+              onChanged: (f) => _set(() => _format = f),
             ),
-            const SizedBox(height: 16),
-            row(
-              l.format,
-              PopUpButton<ExportFormat>(
-                key: const ValueKey('export format'),
-                width: PreviewMetrics.exportWhere,
-                items: [for (final f in formats) PopUpItem(f, f.label)],
-                value: _format,
-                onChanged: (f) => _set(() => _format = f),
-              ),
-            ),
-            if (_format == ExportFormat.jpeg)
-              row(
-                l.quality,
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+          ),
+          if (_format == ExportFormat.jpeg)
+            _row(
+              context,
+              l.quality,
+              SizedBox(
+                width: PreviewMetrics.exportSlider,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      l.qualityLeast,
-                      style: previewText(11, color: colors.secondary),
-                    ),
-                    const SizedBox(width: 6),
-                    SilicaSlider(
+                    AmalfiSlider(
                       key: const ValueKey('export quality'),
-                      width: PreviewMetrics.exportSlider,
                       value: _quality,
                       onChanged: (v) => setState(() => _quality = v),
                       onChangeEnd: (_) => _measure(),
+                      semanticLabel: l.quality,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      l.qualityBest,
-                      style: previewText(11, color: colors.secondary),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          l.qualityLeast,
+                          style: AmalfiType.caption(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          l.qualityBest,
+                          style: AmalfiType.caption(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            if (_format == ExportFormat.png && widget.alpha)
-              row(
-                '',
-                SilicaCheckbox(
-                  key: const ValueKey('export alpha'),
-                  label: l.alpha,
-                  value: _alpha,
-                  onChanged: (v) => _set(() => _alpha = v),
-                ),
-              ),
-            if (_format == ExportFormat.pdf && widget.onPermissions != null)
-              row(
-                '',
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: SilicaButton(
-                    key: const ValueKey('export permissions'),
-                    label: l.permissionsButton,
-                    onPressed: () async {
-                      final chosen = await widget.onPermissions!(_security);
-                      if (chosen != null && mounted) {
-                        setState(() => _security = chosen);
-                      }
-                    },
-                  ),
-                ),
-              ),
-            if (widget.estimate != null)
-              row(
-                l.fileSizeLabel,
-                Text(
-                  _size == null ? '—' : formatBytes(_size!, l.localeName),
-                  key: const ValueKey('export size'),
-                  style: previewText(13, color: colors.secondary),
-                ),
-              ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SilicaButton(
-                  key: const ValueKey('export cancel'),
-                  label: l.cancel,
-                  minWidth: PreviewMetrics.exportButton.width,
-                  onPressed: () => widget.close(),
-                ),
-                const SizedBox(width: 8),
-                SilicaButton(
-                  key: const ValueKey('export save'),
-                  label: l.save,
-                  minWidth: PreviewMetrics.exportButton.width,
-                  role: ButtonRole.primary,
-                  onPressed: () => widget.close(
-                    ExportChoice(
-                      _format,
-                      quality: _quality,
-                      alpha: _alpha,
-                      security: _security,
-                    ),
-                  ),
-                ),
-              ],
             ),
-          ],
+          if (_format == ExportFormat.png && widget.alpha)
+            _row(
+              context,
+              '',
+              AmalfiCheckbox(
+                key: const ValueKey('export alpha'),
+                label: l.alpha,
+                value: _alpha,
+                onChanged: (v) => _set(() => _alpha = v),
+              ),
+            ),
+          if (_format == ExportFormat.pdf && widget.onPermissions != null)
+            _row(
+              context,
+              '',
+              AmalfiPushButton(
+                key: const ValueKey('export permissions'),
+                label: l.permissionsButton,
+                onPressed: () async {
+                  final chosen = await widget.onPermissions!(_security);
+                  if (chosen != null && mounted) {
+                    setState(() => _security = chosen);
+                  }
+                },
+              ),
+            ),
+          if (widget.estimate != null)
+            _row(
+              context,
+              l.fileSizeLabel,
+              Text(
+                _size == null ? '—' : formatBytes(_size!, l.localeName),
+                key: const ValueKey('export size'),
+                style: AmalfiType.body(color: colors.textPrimary),
+              ),
+            ),
+        ],
+        footer: _footer(
+          AmalfiPushButton(
+            key: const ValueKey('export cancel'),
+            label: l.cancel,
+            onPressed: () => widget.close(),
+          ),
+          AmalfiPushButton(
+            key: const ValueKey('export save'),
+            label: l.save,
+            variant: AmalfiPushButtonVariant.primary,
+            onPressed: () => widget.close(
+              ExportChoice(
+                _format,
+                quality: _quality,
+                alpha: _alpha,
+                security: _security,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -276,7 +287,7 @@ class _ExportSheetState extends State<_ExportSheet> {
 Future<PdfSecurity?> showPermissionsSheet(
   BuildContext context, {
   PdfSecurity? initial,
-}) => showWindowSheet<PdfSecurity>(
+}) => showPreviewSheet<PdfSecurity>(
   context,
   semanticLabel: AppLocalizations.of(context).editPermissions,
   builder: (context, sheet) =>
@@ -357,119 +368,114 @@ class _PermissionsSheetState extends State<_PermissionsSheet> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final colors = PreviewColors.of(context);
+    final colors = AmalfiTheme.of(context).colors;
+    // The fields fill the card's width (340 less its 24 pt padding).
+    const fieldWidth = PreviewMetrics.permissionsWidth - 48;
     Widget field(String key, TextEditingController c, String hint, bool on) =>
-        Padding(
-          padding: const EdgeInsets.only(left: 24, top: 6),
-          child: SilicaTextField(
-            key: ValueKey(key),
-            controller: c,
-            secure: true,
-            enabled: on,
-            placeholder: hint,
-          ),
+        AmalfiSecureField(
+          key: ValueKey(key),
+          controller: c,
+          enabled: on,
+          width: fieldWidth,
+          placeholder: hint,
+          semanticLabel: hint,
         );
     Widget check(String key, String label, bool value, ValueChanged<bool> on) =>
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: SilicaCheckbox(
-            key: ValueKey(key),
-            label: label,
-            value: value,
-            onChanged: (v) => setState(() => on(v)),
-          ),
+        AmalfiCheckbox(
+          key: ValueKey(key),
+          label: label,
+          value: value,
+          onChanged: (v) => setState(() => on(v)),
         );
-    return SizedBox(
+    Widget heading(String text) =>
+        Text(text, style: AmalfiType.headline(color: colors.textPrimary));
+    return KeyedSubtree(
       key: const ValueKey('permissions sheet'),
-      width: PreviewMetrics.permissionsSheet.width,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SilicaCheckbox(
-              key: const ValueKey('require password'),
-              label: l.requirePassword,
-              value: _needsPassword,
-              onChanged: (v) => setState(() => _needsPassword = v),
-            ),
-            field(
-              'user password',
-              _user,
-              l.passwordPlaceholder,
-              _needsPassword,
-            ),
-            field('user password again', _userAgain, l.verify, _needsPassword),
-            const SizedBox(height: 16),
-            Text(
-              l.permissions,
-              style: previewText(
-                13,
-                color: colors.text,
-                weight: FontWeight.w700,
+      child: AmalfiDialog(
+        title: l.editPermissions,
+        layout: AmalfiDialogLayout.generic,
+        width: PreviewMetrics.permissionsWidth,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              AmalfiCheckbox(
+                key: const ValueKey('require password'),
+                label: l.requirePassword,
+                value: _needsPassword,
+                onChanged: (v) => setState(() => _needsPassword = v),
               ),
-            ),
-            check(
-              'allow printing',
-              l.allowPrinting,
-              _printing,
-              (v) => _printing = v,
-            ),
-            check(
-              'allow copying',
-              l.allowCopying,
-              _copying,
-              (v) => _copying = v,
-            ),
-            check(
-              'allow assembling',
-              l.allowAssembling,
-              _assembling,
-              (v) => _assembling = v,
-            ),
-            check(
-              'allow annotating',
-              l.allowAnnotating,
-              _annotating,
-              (v) => _annotating = v,
-            ),
-            check('allow forms', l.allowForms, _forms, (v) => _forms = v),
-            const SizedBox(height: 16),
-            Text(
-              l.ownerPassword,
-              style: previewText(
-                13,
-                color: colors.text,
-                weight: FontWeight.w700,
+              field(
+                'user password',
+                _user,
+                l.passwordPlaceholder,
+                _needsPassword,
               ),
-            ),
-            field('owner password', _owner, l.passwordPlaceholder, true),
-            field('owner password again', _ownerAgain, l.verify, true),
-            if (_problem case final problem?)
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Text(
+              field(
+                'user password again',
+                _userAgain,
+                l.verify,
+                _needsPassword,
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              heading(l.permissions),
+              check(
+                'allow printing',
+                l.allowPrinting,
+                _printing,
+                (v) => _printing = v,
+              ),
+              check(
+                'allow copying',
+                l.allowCopying,
+                _copying,
+                (v) => _copying = v,
+              ),
+              check(
+                'allow assembling',
+                l.allowAssembling,
+                _assembling,
+                (v) => _assembling = v,
+              ),
+              check(
+                'allow annotating',
+                l.allowAnnotating,
+                _annotating,
+                (v) => _annotating = v,
+              ),
+              check('allow forms', l.allowForms, _forms, (v) => _forms = v),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              heading(l.ownerPassword),
+              field('owner password', _owner, l.passwordPlaceholder, true),
+              field('owner password again', _ownerAgain, l.verify, true),
+              if (_problem case final problem?)
+                Text(
                   problem,
                   key: const ValueKey('permissions problem'),
-                  style: previewText(11, color: const Color(0xFFE5322D)),
+                  style: AmalfiType.caption(color: colors.paletteTerracotta),
                 ),
-              ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SilicaButton(label: l.cancel, onPressed: () => widget.close()),
-                const SizedBox(width: 8),
-                SilicaButton(
-                  key: const ValueKey('permissions apply'),
-                  label: l.apply,
-                  role: ButtonRole.primary,
-                  onPressed: () => _apply(l),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
+        ],
+        footer: _footer(
+          AmalfiPushButton(label: l.cancel, onPressed: () => widget.close()),
+          AmalfiPushButton(
+            key: const ValueKey('permissions apply'),
+            label: l.apply,
+            variant: AmalfiPushButtonVariant.primary,
+            onPressed: () => _apply(l),
+          ),
         ),
       ),
     );
@@ -496,7 +502,7 @@ const List<Size> fitPresets = [
 Future<Size?> showAdjustSizeSheet(
   BuildContext context, {
   required ImageItem item,
-}) => showWindowSheet<Size>(
+}) => showPreviewSheet<Size>(
   context,
   semanticLabel: AppLocalizations.of(context).adjustSize,
   builder: (context, sheet) => _AdjustSizeSheet(item: item, close: sheet.close),
@@ -601,7 +607,7 @@ class _AdjustSizeSheetState extends State<_AdjustSizeSheet> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final colors = PreviewColors.of(context);
+    final colors = AmalfiTheme.of(context).colors;
     final unitLabels = {
       SizeUnit.pixels: l.unitPixels,
       SizeUnit.percent: l.unitPercent,
@@ -620,170 +626,149 @@ class _AdjustSizeSheetState extends State<_AdjustSizeSheet> {
         100;
     final before = widget.item.fileSize;
     final after = (before * percent / 100).round();
-    Widget label(String text) => SizedBox(
-      width: 110,
-      child: Text(
-        text,
-        textAlign: TextAlign.right,
-        style: previewText(13, color: colors.text),
-      ),
-    );
     Widget numberField(String key, TextEditingController c, VoidCallback on) =>
-        SizedBox(
-          width: 106,
-          height: 26,
-          child: SilicaTextField(
-            key: ValueKey(key),
-            controller: c,
-            onChanged: (_) => on(),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-            ],
-          ),
+        AmalfiTextField(
+          key: ValueKey(key),
+          controller: c,
+          width: 112,
+          semanticLabel: key,
+          onChanged: (_) => on(),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+          ],
         );
-    return SizedBox.fromSize(
+    return KeyedSubtree(
       key: const ValueKey('adjust size sheet'),
-      size: PreviewMetrics.adjustSizeSheet,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                label(l.fitInto),
-                const SizedBox(width: 8),
-                PopUpButton<int>(
+      child: AmalfiDialog(
+        title: l.adjustSize,
+        layout: AmalfiDialogLayout.generic,
+        width: PreviewMetrics.adjustSizeWidth,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 12,
+            children: [
+              _row(
+                context,
+                l.fitInto,
+                AmalfiPopUpButton<int>(
                   key: const ValueKey('fit into'),
                   width: 200,
                   items: [
-                    PopUpItem(-1, l.custom),
+                    AmalfiPopUpItem(value: -1, label: l.custom),
                     for (final (i, s) in fitPresets.indexed)
-                      PopUpItem(i, l.pixels(s.width.round(), s.height.round())),
+                      AmalfiPopUpItem(
+                        value: i,
+                        label: l.pixels(s.width.round(), s.height.round()),
+                      ),
                   ],
                   value: _preset ?? -1,
                   onChanged: (i) => _choosePreset(i < 0 ? null : i),
                 ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                label(l.widthLabel),
-                const SizedBox(width: 8),
-                numberField('adjust width', _width, () => _typed(width: true)),
-                const SizedBox(width: 8),
-                PopUpButton<SizeUnit>(
-                  key: const ValueKey('size unit'),
-                  width: 120,
-                  items: [
-                    for (final u in SizeUnit.values)
-                      PopUpItem(u, unitLabels[u]!),
+              ),
+              _row(
+                context,
+                l.widthLabel,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 8,
+                  children: [
+                    numberField(
+                      'adjust width',
+                      _width,
+                      () => _typed(width: true),
+                    ),
+                    AmalfiPopUpButton<SizeUnit>(
+                      key: const ValueKey('size unit'),
+                      width: 120,
+                      items: [
+                        for (final u in SizeUnit.values)
+                          AmalfiPopUpItem(value: u, label: unitLabels[u]!),
+                      ],
+                      value: _unit,
+                      onChanged: (u) => setState(() {
+                        _unit = u;
+                        _show();
+                      }),
+                    ),
                   ],
-                  value: _unit,
-                  onChanged: (u) => setState(() {
-                    _unit = u;
-                    _show();
-                  }),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                label(l.heightLabel),
-                const SizedBox(width: 8),
+              ),
+              _row(
+                context,
+                l.heightLabel,
                 numberField(
                   'adjust height',
                   _height,
                   () => _typed(width: false),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                label(l.resolution),
-                const SizedBox(width: 8),
-                numberField('resolution', _dpi, () {
-                  final v = double.tryParse(_dpi.text.replaceAll(',', '.'));
-                  if (v == null || v <= 0) return;
-                  setState(() {
-                    _resolution = v;
-                    _show();
-                  });
-                }),
-                const SizedBox(width: 8),
-                Text(
-                  l.pixelsPerInch,
-                  style: previewText(13, color: colors.text),
+              ),
+              _row(
+                context,
+                '',
+                AmalfiCheckbox(
+                  key: const ValueKey('scale proportionally'),
+                  label: l.scaleProportionally,
+                  value: _proportional,
+                  onChanged: (v) => setState(() {
+                    _proportional = v;
+                    if (v) _typed(width: true);
+                  }),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.only(left: 118),
-              child: SilicaCheckbox(
-                key: const ValueKey('scale proportionally'),
-                label: l.scaleProportionally,
-                value: _proportional,
-                onChanged: (v) => setState(() {
-                  _proportional = v;
-                  if (v) _typed(width: true);
-                }),
               ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                border: Border.all(color: colors.sidebarLine),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l.resultingSize,
-                    style: previewText(
-                      11,
-                      color: colors.secondary,
-                      weight: FontWeight.w700,
+              _row(
+                context,
+                l.resolution,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 8,
+                  children: [
+                    numberField('resolution', _dpi, () {
+                      final v = double.tryParse(_dpi.text.replaceAll(',', '.'));
+                      if (v == null || v <= 0) return;
+                      setState(() {
+                        _resolution = v;
+                        _show();
+                      });
+                    }),
+                    Text(
+                      l.pixelsPerInch,
+                      style: AmalfiType.body(color: colors.textSecondary),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l.resultingDetail(
-                      '${percent.round()}',
-                      formatBytes(before, l.localeName),
-                      formatBytes(after, l.localeName),
-                    ),
-                    key: const ValueKey('resulting size'),
-                    style: previewText(11, color: colors.text),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SilicaButton(
-                  label: l.cancel,
-                  minWidth: 71,
-                  onPressed: () => widget.close(),
+            ],
+          ),
+          const SizedBox(height: 1, child: AmalfiWindowSeparator()),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 4,
+            children: [
+              Text(
+                l.resultingSize,
+                style: AmalfiType.headline(color: colors.textPrimary),
+              ),
+              Text(
+                l.resultingDetail(
+                  '${percent.round()}',
+                  formatBytes(before, l.localeName),
+                  formatBytes(after, l.localeName),
                 ),
-                const SizedBox(width: 8),
-                SilicaButton(
-                  key: const ValueKey('adjust ok'),
-                  label: l.ok,
-                  minWidth: 71,
-                  role: ButtonRole.primary,
-                  onPressed: () => widget.close(pixels),
-                ),
-              ],
-            ),
-          ],
+                key: const ValueKey('resulting size'),
+                style: AmalfiType.callout(color: colors.textSecondary),
+              ),
+            ],
+          ),
+        ],
+        footer: _footer(
+          AmalfiPushButton(label: l.cancel, onPressed: () => widget.close()),
+          AmalfiPushButton(
+            key: const ValueKey('adjust ok'),
+            label: l.ok,
+            variant: AmalfiPushButtonVariant.primary,
+            onPressed: () => widget.close(pixels),
+          ),
         ),
       ),
     );
@@ -802,7 +787,7 @@ Future<String?> showFieldSheet(
   String placeholder = '',
   bool secure = false,
   Key? fieldKey,
-}) => showWindowSheet<String>(
+}) => showPreviewSheet<String>(
   context,
   semanticLabel: title,
   builder: (context, sheet) => _FieldSheet(
@@ -852,49 +837,34 @@ class _FieldSheetState extends State<_FieldSheet> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final colors = PreviewColors.of(context);
-    return SizedBox(
-      width: 360,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.title,
-              style: previewText(
-                13,
-                color: colors.text,
-                weight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(widget.message, style: previewText(12, color: colors.text)),
-            const SizedBox(height: 12),
-            SilicaTextField(
-              key: widget.fieldKey,
-              controller: _text,
-              autofocus: true,
-              secure: widget.secure,
-              placeholder: widget.placeholder,
-              onSubmitted: (_) => _accept(),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SilicaButton(label: l.cancel, onPressed: () => widget.close()),
-                const SizedBox(width: 8),
-                SilicaButton(
-                  key: const ValueKey('sheet accept'),
-                  label: widget.accept,
-                  role: ButtonRole.primary,
-                  onPressed: _accept,
-                ),
-              ],
-            ),
-          ],
+    final colors = AmalfiTheme.of(context).colors;
+    return AmalfiDialog(
+      title: widget.title,
+      layout: AmalfiDialogLayout.generic,
+      width: PreviewMetrics.fieldSheetWidth,
+      children: [
+        Text(
+          widget.message,
+          style: AmalfiType.callout(color: colors.textSecondary),
+        ),
+        AmalfiTextField(
+          key: widget.fieldKey,
+          controller: _text,
+          autofocus: true,
+          obscureText: widget.secure,
+          width: PreviewMetrics.fieldSheetWidth - 48,
+          placeholder: widget.placeholder,
+          semanticLabel: widget.title,
+          onSubmitted: (_) => _accept(),
+        ),
+      ],
+      footer: _footer(
+        AmalfiPushButton(label: l.cancel, onPressed: () => widget.close()),
+        AmalfiPushButton(
+          key: const ValueKey('sheet accept'),
+          label: widget.accept,
+          variant: AmalfiPushButtonVariant.primary,
+          onPressed: _accept,
         ),
       ),
     );

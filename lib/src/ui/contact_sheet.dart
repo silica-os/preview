@@ -1,8 +1,8 @@
-// The contact sheet (PREVIEW-01 › Sidebar, View › Contact Sheet ⌥⌘6): a grid of every page or
-// image over the whole content area. A 28 pt section header (a disclosure and the file's name),
-// then cells of 152 × 216 holding a 120 × 170 page and its number. The chosen page sits on a
-// gray rounded rectangle with its number in an accent pill. A click chooses a page; a double
-// click shows it in the thumbnails view.
+// The contact sheet (kit `Apps/Preview/Contact Sheet`, View › Contact Sheet ⌥⌘6): a grid of
+// every page or image over the whole content area. A 28 pt header (a disclosure and the file's
+// name), then cells of 152 × 216 on a 164 × 232 pitch holding a 120 × 172 page and its number
+// (left aligned under the page). The chosen page sits on a rounded rectangle with its number in
+// an accent pill. A click chooses a page; a double click shows it in the thumbnails view.
 
 import 'dart:math' as math;
 
@@ -42,53 +42,75 @@ class _ContactSheetState extends State<ContactSheet> {
     final name = c.pdf?.name ?? c.images?.title ?? '';
     Widget grid() => LayoutBuilder(
       builder: (context, box) {
-        final columns = math.max(1, (box.maxWidth / cell.width).floor());
+        final columns = math.max(
+          1,
+          ((box.maxWidth -
+                      PreviewMetrics.contactPadding +
+                      PreviewMetrics.contactGap) /
+                  (cell.width + PreviewMetrics.contactGap))
+              .floor(),
+        );
         final rows = (c.count / columns).ceil();
         return ListView.builder(
           key: const ValueKey('contact sheet'),
           controller: _scroll,
-          padding: EdgeInsets.only(top: top, bottom: 12),
+          padding: EdgeInsets.only(top: top, bottom: 16),
           itemCount: 1 + (_open ? rows : 0),
           itemBuilder: (context, row) {
             if (row == 0) {
+              // The header sits on the window's surface over the grid's canvas.
               return GestureDetector(
                 key: const ValueKey('contact header'),
                 behavior: HitTestBehavior.opaque,
                 onTap: () => setState(() => _open = !_open),
                 child: SizedBox(
                   height: PreviewMetrics.contactHeader,
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 12),
-                      SizedBox(
-                        width: 9,
-                        height: 9,
-                        child: OutlineTriangle(open: _open, color: colors.text),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: previewText(
-                            12,
-                            color: colors.text,
-                            weight: FontWeight.w700,
+                  child: ColoredBox(
+                    color: colors.window,
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 16),
+                        AmalfiGlyph(
+                          _open
+                              ? AmalfiGlyphs.chevronDown
+                              : AmalfiGlyphs.chevronRight,
+                          size: 12,
+                          color: colors.secondary,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AmalfiType.headline(color: colors.text),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );
             }
             final first = (row - 1) * columns;
-            return Row(
-              children: [
-                for (var i = first; i < math.min(first + columns, c.count); i++)
-                  _Cell(controller: c, index: i),
-              ],
+            return Padding(
+              padding: EdgeInsets.only(
+                left: PreviewMetrics.contactPadding,
+                top: row == 1
+                    ? PreviewMetrics.contactFirstRow
+                    : PreviewMetrics.contactRowGap,
+              ),
+              child: Row(
+                spacing: PreviewMetrics.contactGap,
+                children: [
+                  for (
+                    var i = first;
+                    i < math.min(first + columns, c.count);
+                    i++
+                  )
+                    _Cell(controller: c, index: i),
+                ],
+              ),
             );
           },
         );
@@ -127,6 +149,7 @@ class _Cell extends StatelessWidget {
       );
       picture = ShownImage(item: item, scale: scale);
     }
+    final label = c.isPdf ? '${index + 1}' : c.images!.images[index].name;
     return GestureDetector(
       key: ValueKey('contact $index'),
       behavior: HitTestBehavior.opaque,
@@ -137,39 +160,68 @@ class _Cell extends StatelessWidget {
       },
       child: SizedBox.fromSize(
         size: PreviewMetrics.contactCell,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: chosen ? colors.selectionInactive : null,
-                borderRadius: BorderRadius.circular(
-                  PreviewMetrics.thumbnailRadius,
+            if (chosen)
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    color: AmalfiTheme.of(context).colors.lineSeparator,
+                    shape: AmalfiSmoothBorder(radius: 10),
+                  ),
                 ),
               ),
-              child: SizedBox.fromSize(
-                size: page,
-                child: Center(child: picture),
-              ),
+            Positioned(
+              left: PreviewMetrics.contactPageLeft,
+              top: PreviewMetrics.contactPageTop,
+              width: page.width,
+              height: page.height,
+              child: Center(child: picture),
             ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: chosen ? PreviewColors.accent : null,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                c.isPdf ? '${index + 1}' : c.images!.images[index].name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: previewText(
-                  11,
-                  color: chosen ? const Color(0xFFFFFFFF) : colors.secondary,
+            if (chosen)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: PreviewMetrics.contactPillTop,
+                child: Center(
+                  child: DecoratedBox(
+                    decoration: ShapeDecoration(
+                      color: colors.selection,
+                      shape: AmalfiSmoothBorder(radius: 10),
+                    ),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 20,
+                      ),
+                      child: Center(
+                        widthFactor: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AmalfiType.caption(color: colors.onAccent),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Positioned(
+                left: 0,
+                right: 0,
+                top: PreviewMetrics.contactNumberTop,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AmalfiType.caption(color: colors.secondary),
                 ),
               ),
-            ),
           ],
         ),
       ),

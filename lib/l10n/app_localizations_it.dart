@@ -614,6 +614,30 @@ class AppLocalizationsIt extends AppLocalizations {
   String get zoomTooltip => 'Zoom';
 
   @override
+  String get overflowTooltip => 'Altro';
+
+  @override
+  String get textSize => 'Dimensione del testo';
+
+  @override
+  String get bold => 'Grassetto';
+
+  @override
+  String get italic => 'Corsivo';
+
+  @override
+  String get alignLeft => 'Allinea a sinistra';
+
+  @override
+  String get alignCenter => 'Centra';
+
+  @override
+  String get alignRight => 'Allinea a destra';
+
+  @override
+  String get alignJustify => 'Giustifica';
+
+  @override
   String get infoModified => 'Modificato';
 
   @override

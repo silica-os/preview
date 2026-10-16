@@ -285,10 +285,13 @@ class _MarkupLayerState extends State<MarkupLayer> {
                 left: editing.rect.left * k,
                 top: editing.rect.top * k,
                 width: math.max(60, editing.rect.width * k),
-                child: SilicaTextField(
+                child: AmalfiTextField(
                   key: const ValueKey('text box field'),
                   controller: _text,
                   autofocus: true,
+                  size: AmalfiFieldSize.small,
+                  width: math.max(60, editing.rect.width * k),
+                  semanticLabel: 'Text',
                   onSubmitted: (_) => setState(_commitText),
                 ),
               ),

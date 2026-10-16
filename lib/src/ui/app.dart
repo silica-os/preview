@@ -100,30 +100,34 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
     child: DefaultTextEditingShortcuts(
       child: ScrollConfiguration(
         behavior: const SilicaScrollBehavior(),
-        child: Builder(
-          builder: (context) => ColoredBox(
-            color: PreviewColors.of(context).window,
-            child: _ActiveScope(
-              active: _active,
-              child: Overlay(
-                initialEntries: [
-                  OverlayEntry(
-                    builder: (context) => SilicaAppWindow(
-                      builder: (context) {
-                        final files = _files;
-                        _files = const [];
-                        return _Window(
-                          loader: widget.loader,
-                          dialogs: widget.dialogs,
-                          files: files,
-                          onController: widget.onController,
-                          exporter: widget.exporter,
-                          screenSize: widget.screenSize,
-                        );
-                      },
+        // The Amalfi tokens with the Preview palette (`App/Preview/*`), light and dark.
+        child: AmalfiTheme(
+          app: 'Preview',
+          child: Builder(
+            builder: (context) => ColoredBox(
+              color: PreviewColors.of(context).window,
+              child: _ActiveScope(
+                active: _active,
+                child: Overlay(
+                  initialEntries: [
+                    OverlayEntry(
+                      builder: (context) => SilicaAppWindow(
+                        builder: (context) {
+                          final files = _files;
+                          _files = const [];
+                          return _Window(
+                            loader: widget.loader,
+                            dialogs: widget.dialogs,
+                            files: files,
+                            onController: widget.onController,
+                            exporter: widget.exporter,
+                            screenSize: widget.screenSize,
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

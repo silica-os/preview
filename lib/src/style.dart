@@ -36,71 +36,24 @@ abstract final class PreviewMetrics {
   static const Offset windowOrigin = Offset(4, 34);
   static const double windowCascade = 29;
 
-  // --- Toolbar (PREVIEW-01 › Title bar and toolbar; x from the window's left edge) -----------
+  // --- Toolbar (kit `Apps/Preview/Toolbar *`; the pieces' widths with 4 pt of padding) --------
 
-  /// A toolbar capsule is its segments plus a 1 pt outline on each side (silica_ui); the
-  /// segment widths below give the measured outer widths.
-  static const double capsuleOutline = 2;
-
-  /// The view menu button: a 57 pt slot from x 92 with a 50 × 38 capsule in it (the sidebar
-  /// glyph and a chevron; it opens the view menu).
-  static const double viewSlotLeft = 92;
-  static const double viewSlot = 57;
-  static const double viewButton = 50 - capsuleOutline;
-
-  /// The title block starts at x 164: the name 13 pt bold over a 11 pt secondary line.
-  static const double titleLeft = 164;
-  static const double titleSize = 13;
-  static const double subtitleSize = 11;
-
-  /// The zoom group: zoom out, actual size, zoom in (a 113 × 38 capsule with 1 pt separators;
-  /// the segments were read as 38, 36 and 39 with the outline and the separators).
-  static const double zoomOutSegment = 37;
-  static const double actualSizeSegment = 35;
-  static const double zoomInSegment = 37;
-  static const double separator = 1;
-
-  /// The highlight group (PDF): the highlight button and its colour menu chevron (76 × 38).
-  static const double highlightSegment = 37;
-  static const double highlightMenuSegment = 36;
-
-  /// Rotate, a 38 pt circle (the remove background and form filling buttons beside it are not
-  /// in Preview).
-  static const double rotateSegment = 36;
-
-  /// The markup button, a single circle 40 wide.
-  static const double markupButton = 40 - capsuleOutline;
-
-  /// The inspector button, a 38 pt circle (the share button beside it is not in Preview).
-  static const double inspectorSegment = 36;
-
-  /// Gaps between the groups, left to right: zoom | highlight | rotate, markup | inspector |
-  /// search, and the search field's right margin.
-  static const double gapAfterZoom = 6;
-  static const double gapAfterHighlight = 7;
-  static const double gapAfterTools = 0;
-  static const double gapAfterMarkup = 8;
-  static const double gapBeforeSearch = 3;
-  static const double toolbarTrailing = 7;
-
-  /// The search field fills the rest of the toolbar, at least this wide; narrower, it
-  /// collapses into a magnifier circle and the items that do not fit go into the overflow
-  /// circle (both 38 × 38).
-  static const double searchMinWidth = 273;
-
-  /// The widest search field seen. *Provisional* as a limit.
-  static const double searchMaxWidth = 327;
-  static const double roundButton = 38 - capsuleOutline;
+  /// The view piece (two 32 pt segments), the zoom piece (three), the highlight piece (two) and
+  /// a one-button piece, and the search piece (a 200 pt field).
+  static const double viewPiece = 72;
+  static const double zoomPiece = 104;
+  static const double highlightPiece = 72;
+  static const double buttonPiece = 40;
+  static const double searchPiece = 208;
 
   /// The title's narrowest width before items move into the overflow menu. *Provisional.*
   static const double titleMinWidth = 80;
 
   /// The title popover (name, location).
-  static const Size titlePopover = Size(502, 150);
+  static const Size titlePopover = Size(400, 96);
 
-  /// The find bar under the toolbar while searching.
+  /// The find bar under the toolbar while searching (kit `Page search`: 36).
   static const double findBarHeight = 36;
-  static const Size findDoneButton = Size(50, 26);
 
   /// The markup toolbar under the toolbar (shown and hidden at once, no animation). The first
   /// time it shows over an image shown whole, the window grows by 31 pt.
@@ -114,61 +67,77 @@ abstract final class PreviewMetrics {
   static const double sidebarWidth = 160;
   static const double sidebarMinWidth = 160;
   static const double sidebarMaxWidth = 400;
-  static const double sidebarSearchWidth = 199;
+  static const double sidebarSearchWidth = 200;
   static const double sidebarDivider = 1;
 
-  /// The scroller at the sidebar's right edge: the cells are centred in the rest.
-  static const double sidebarScroller = 17;
-
-  /// Thumbnails: a 105 pt wide page image in a 117 pt cell (6 pt inset), a 3 pt gap and the
-  /// 16 pt page number under it; 10 pt between cells. The image grows by 155 pt for 180 pt of
-  /// sidebar (260 at 340).
-  static const double thumbnailImage = 105;
+  /// Thumbnails (kit `Sidebar Thumbnails`, `Sidebar Images`): a cell 144 wide (8 from the
+  /// sidebar's edges) holding a 104 pt wide page (a 120 pt wide image) 20 (12) from its sides and
+  /// 8 from its top, the 14 pt label 2 under it and 4 below that; 8 between cells. The image
+  /// grows by 155 pt for 180 pt of sidebar (measured: 260 at 340).
+  static const double thumbnailImage = 104;
+  static const double thumbnailPhoto = 120;
   static const double thumbnailGrowth = 155 / 180;
-  static const double thumbnailInset = 6;
-  static const double thumbnailLabelGap = 3;
-  static const double thumbnailLabel = 16;
-  static const double thumbnailGap = 10;
-  static const double thumbnailRadius = 8;
+  static const double thumbnailInset = 8;
+  static const double thumbnailLabelGap = 2;
+  static const double thumbnailLabel = 14;
+  static const double thumbnailLabelBottom = 4;
+  static const double thumbnailGap = 8;
+  static const double thumbnailRadius = 10;
+  static const double thumbnailCellMargin = 8;
 
   /// The tallest thumbnail for its width (an A4 portrait page fills it).
   static const double thumbnailAspect = 1.42;
 
-  /// Several files in one window: one section per file, 5 pt apart.
-  static const double sectionGap = 5;
+  /// Several files in one window: one section per file.
+  static const double sectionGap = 8;
 
   /// The width of the thumbnail image for a sidebar `width` wide.
-  static double thumbnailWidth(double width) =>
-      thumbnailImage + (width - sidebarWidth) * thumbnailGrowth;
+  static double thumbnailWidth(double width, {bool photo = false}) =>
+      (photo ? thumbnailPhoto : thumbnailImage) +
+      (width - sidebarWidth) * thumbnailGrowth;
 
-  /// Table of contents: the document row 19, entries 40, 12 pt per level, the disclosure at
-  /// x 12, the selection inset 10 pt from the sidebar's edges.
-  static const double contentsHeader = 19;
+  /// Table of contents (kit `Sidebar Contents`): the document's name (Headline) 8 from the top,
+  /// entries on a 40 pt pitch from 36, the chosen one on a 32 pt capsule inset 8 (radius 8),
+  /// the disclosure (12) at 6 from the capsule and the title 10 after it, 12 per level.
+  static const double contentsHeader = 36;
   static const double contentsRow = 40;
+  static const double contentsCapsule = 32;
   static const double contentsIndent = 12;
   static const double contentsDisclosure = 12;
-  static const double contentsSelectionInset = 10;
+  static const double contentsSelectionInset = 8;
   static const double contentsRadius = 8;
 
-  /// Highlights and notes: the header 19, a highlight row 127, a note row 114, the 3 pt colour
+  /// Highlights and notes: the header, a highlight row 80 and a note row 72, the 3 pt colour
   /// bar.
-  static const double notesHeader = 19;
-  static const double highlightRow = 127;
-  static const double noteRow = 114;
+  static const double notesHeader = 36;
+  static const double highlightRow = 80;
+  static const double noteRow = 72;
   static const double noteBar = 3;
 
-  /// Bookmarks: the header 30, rows 85 (page caption and three lines of the page's text).
-  static const double bookmarksHeader = 30;
-  static const double bookmarkRow = 85;
+  /// Bookmarks: the header, rows of 80 (page caption and three lines of the page's text).
+  static const double bookmarksHeader = 36;
+  static const double bookmarkRow = 80;
 
-  /// Search results in the sidebar: rows 77 with a 40 × 52 page thumbnail.
-  static const double resultRow = 77;
-  static const Size resultThumbnail = Size(40, 52);
+  /// Search results in the sidebar (kit `Sidebar Search`): rows 72 on a 76 pitch with a
+  /// 40 × 56 page thumbnail at 8; the text at 56 from the capsule.
+  static const double resultRow = 72;
+  static const double resultGap = 4;
+  static const Size resultThumbnail = Size(40, 56);
 
-  /// Contact sheet: a 28 pt section header, cells 152 × 216 holding a 120 × 170 page.
+  /// Contact sheet (kit `Apps/Preview/Contact Sheet`): a 28 pt header, cells of 152 × 216 on a
+  /// 164 × 232 pitch (24 from the left, 12 below the header) holding a 120 × 172 page 16 in and
+  /// 12 down; the number at 192 (left aligned), the chosen cell's pill (28 × 20) at 188.
   static const double contactHeader = 28;
   static const Size contactCell = Size(152, 216);
-  static const Size contactPage = Size(120, 170);
+  static const Size contactPage = Size(120, 172);
+  static const double contactPadding = 24;
+  static const double contactGap = 12;
+  static const double contactRowGap = 16;
+  static const double contactFirstRow = 12;
+  static const double contactPageLeft = 16;
+  static const double contactPageTop = 12;
+  static const double contactNumberTop = 192;
+  static const double contactPillTop = 188;
 
   // --- Pages and images (PREVIEW-01 › Viewing, PDF display modes) ----------------------------
 
@@ -177,8 +146,8 @@ abstract final class PreviewMetrics {
   static const double pageMargin = 14;
   static const double pageGap = 17;
 
-  /// The light page shadow: the gutter darkens over the last 14 pt next to the page.
-  static const double pageShadow = 14;
+  /// The page shadow (`Apps/Preview/Page`): offset (0, 2), blur 8.
+  static const double pageShadow = 8;
 
   /// Images fill the content area when fitted.
   static const double imageMargin = 0;
@@ -217,11 +186,13 @@ abstract final class PreviewMetrics {
   /// Selection handles: 10 pt circles with a 1 pt white ring.
   static const double handle = 10;
 
-  /// Popovers under their buttons.
-  static const Size shapesPopover = Size(110, 218);
-  static const Size shapeStylePopover = Size(120, 417);
-  static const Size colourPopover = Size(270, 300);
-  static const Size textStylePopover = Size(289, 138);
+  /// Popovers under their buttons: the body is the content with the popover's 16 pt padding
+  /// (the shapes in two columns of 28, 12 apart; the colour grid of 12 × 18 cells; the style
+  /// rows 24 tall).
+  static const Size shapesPopover = Size(100, 180);
+  static const Size shapeStylePopover = Size(152, 380);
+  static const Size colourPopover = Size(270, 258);
+  static const Size textStylePopover = Size(289, 112);
 
   /// The colour adjustment panel and the resize sheet.
   static const Size adjustColourPanel = Size(334, 540);
@@ -229,30 +200,34 @@ abstract final class PreviewMetrics {
 
   /// A note on a PDF page: the 22 pt icon and its popover.
   static const double noteIcon = 22;
-  static const Size notePopover = Size(274, 154);
+  static const Size notePopover = Size(272, 152);
 
   // --- Files (PREVIEW-02 › PDF features, Files) -----------------------------------------------
 
-  /// The password view in a locked PDF's window: the lock glyph and the field.
-  static const Size lockGlyph = Size(58, 45);
-  static const Size passwordField = Size(242, 24);
+  /// The password view in a locked PDF's window (kit `Apps/Preview/Password`): the lock glyph
+  /// and the field.
+  static const double lockGlyph = 32;
+  static const double passwordField = 244;
 
-  /// Sheets: export (406 wide, the name field 232 × 26, the location pop-up 200, the quality
-  /// slider 182, buttons 81 × 26), permissions, the revert alert.
-  static const double exportWidth = 406;
-  static const Size exportNameField = Size(232, 26);
+  /// Sheets (the kit's `Export`, `Permissions` and `Adjust Size` cards on the 4 pt grid, 24 pt
+  /// of padding): export, permissions, adjust size and the one-field sheet are this wide.
+  static const double exportWidth = 408;
   static const double exportWhere = 200;
-  static const double exportSlider = 182;
-  static const Size exportButton = Size(81, 26);
+  static const double exportSlider = 200;
   static const double exportQuality = 0.85;
-  static const Size permissionsSheet = Size(339, 487);
-  static const Size revertAlert = Size(292, 170);
+  static const double permissionsWidth = 340;
+  static const double adjustSizeWidth = 416;
+  static const double fieldSheetWidth = 360;
+  static const Size revertAlert = Size(280, 170);
 
-  /// The inspector: a 270 pt pane on the right of the window, rows in 250 pt group boxes on a
-  /// 37 pt pitch.
-  static const double inspectorWidth = 270;
-  static const double inspectorGroup = 250;
-  static const double inspectorRow = 37;
+  /// The inspector (`Apps/Preview/Inspector`): a 260 pt pane (`components.md`; the kit's window
+  /// master draws 268) with 8 pt of padding (the kit's), rows 36 pt apart in group boxes of
+  /// radius 10, 8 between boxes.
+  static const double inspectorWidth = 260;
+  static const double inspectorPadding = 8;
+  static const double inspectorRow = 36;
+  static const double inspectorGroupRadius = 10;
+  static const double inspectorGap = 8;
 
   // --- Motion ---------------------------------------------------------------------------------
 
@@ -276,7 +251,8 @@ abstract final class PreviewMetrics {
   static const Duration rerenderDelay = Duration(milliseconds: 120);
 }
 
-/// The colours, light and dark.
+/// The colours of the window, from the Amalfi tokens (`AmalfiColors`) and the Preview palette
+/// (`App/Preview/*`), light and dark.
 @immutable
 class PreviewColors {
   const PreviewColors({
@@ -287,100 +263,106 @@ class PreviewColors {
     required this.sidebarLine,
     required this.text,
     required this.secondary,
+    required this.tertiary,
+    required this.onAccent,
     required this.selection,
     required this.selectionInactive,
     required this.contentsInactive,
     required this.pageShadow,
+    required this.pageBorder,
     required this.textSelection,
     required this.match,
     required this.currentMatch,
     required this.placeholder,
     required this.handle,
+    required this.ink,
+    required this.inkStrong,
+    required this.dark,
   });
 
-  /// The toolbar band and the empty window.
+  /// The colours of [theme] (the Preview palette when the theme has none).
+  factory PreviewColors.from(AmalfiThemeData theme) {
+    final c = theme.colors;
+    final app = theme.appColors is AmalfiPreviewColors
+        ? theme.appColors! as AmalfiPreviewColors
+        : (theme.isDark ? AmalfiPreviewColors.dark : AmalfiPreviewColors.light);
+    return PreviewColors(
+      window: c.surfaceWindow,
+      imageCanvas: app.canvas,
+      pdfCanvas: app.pagesBehind,
+      sidebar: c.surfaceSidebar,
+      sidebarLine: c.lineSeparator,
+      text: c.textPrimary,
+      secondary: c.textSecondary,
+      tertiary: c.textTertiary,
+      onAccent: c.textOnAccent,
+      selection: c.accentAmalfi,
+      // The chosen cell while the sidebar is not focused: a neutral capsule (the kit's
+      // contact sheet draws the chosen page on a grey one).
+      selectionInactive: c.surfaceControlPressed,
+      contentsInactive: c.surfaceControlPressed,
+      // `Apps/Preview/Page`: 0, 2, blur 8 (the shadow's blur is the CSS one).
+      pageShadow: theme.isDark
+          ? const Color(0x52000000)
+          : const Color(0x1F000000),
+      pageBorder: c.lineBorder,
+      textSelection: c.accentAmalfi.withValues(alpha: 0.3),
+      match: app.match.withValues(alpha: 0.6),
+      currentMatch: app.match,
+      placeholder: app.paper,
+      handle: app.handle,
+      ink: app.ink,
+      inkStrong: app.inkStrong,
+      dark: theme.isDark,
+    );
+  }
+
+  /// The toolbar band and the empty window (`Surface/Window`).
   final Color window;
 
-  /// Around an image, behind PDF pages.
+  /// Around an image, behind PDF pages (`App/Preview/Canvas`, `Pages Behind`).
   final Color imageCanvas;
   final Color pdfCanvas;
 
-  /// The sidebar's glass over Silica's backdrop, and its divider.
+  /// The sidebar and the inspector (`Surface/Sidebar`), and their 1 pt edge.
   final Color sidebar;
   final Color sidebarLine;
   final Color text;
   final Color secondary;
+  final Color tertiary;
+  final Color onAccent;
 
-  /// The selected thumbnail or entry: the accent while the sidebar has the focus, muted when
-  /// the focus is in the page; the table of contents' unfocused selection.
+  /// The chosen thumbnail or entry: the accent; neutral when the focus is in the page.
   final Color selection;
   final Color selectionInactive;
   final Color contentsInactive;
 
-  /// The page shadow, blurred over [PreviewMetrics.pageShadow].
+  /// The page shadow (blur 8, offset 2) and its 1 pt border.
   final Color pageShadow;
+  final Color pageBorder;
 
   /// Selected text, search matches, the current match.
   final Color textSelection;
   final Color match;
   final Color currentMatch;
 
-  /// A page not drawn yet.
+  /// A page not drawn yet (`App/Preview/Paper`).
   final Color placeholder;
 
   /// Markup handles.
   final Color handle;
 
-  static const Color accent = Color(0xFF296FFB);
+  /// The ink of a page's text lines in the kit (`Ink`, `Ink Strong`): placeholders of
+  /// thumbnails not rendered yet.
+  final Color ink;
+  final Color inkStrong;
 
-  static const PreviewColors light = PreviewColors(
-    window: Color(0xFFFFFFFF),
-    imageCanvas: Color(0xFFFFFFFF),
-    pdfCanvas: Color(0xFFFCFCFC),
-    sidebar: Color(0xFFEEEDEC),
-    // Provisional: the divider was not sampled.
-    sidebarLine: Color(0xFFD9D9D9),
-    text: Color(0xFF262626),
-    secondary: Color(0xFF808080),
-    selection: accent,
-    selectionInactive: Color(0xFF9DA9C4),
-    // Provisional: measured in dark only.
-    contentsInactive: Color(0xFFDCDCDC),
-    // #fcfcfc darkens to #f1f1f1 next to the page.
-    pageShadow: Color(0x16000000),
-    textSelection: Color(0xFFB8D4FD),
-    // Provisional: only the current match was measured.
-    match: Color(0x66FFFF3B),
-    currentMatch: Color(0xFFFFFF3B),
-    placeholder: Color(0xFFFFFFFF),
-    handle: Color(0xFF316EC8),
-  );
+  /// Whether this is the dark appearance.
+  final bool dark;
 
-  static const PreviewColors dark = PreviewColors(
-    window: Color(0xFF2B2B2B),
-    imageCanvas: Color(0xFF2F2D2C),
-    pdfCanvas: Color(0xFF2B2927),
-    sidebar: Color(0xFF2D2A26),
-    // Provisional: the divider was not sampled.
-    sidebarLine: Color(0xFF111111),
-    text: Color(0xFFE6E6E6),
-    secondary: Color(0xFF9A9A9A),
-    selection: accent,
-    selectionInactive: Color(0xFF3F4B65),
-    contentsInactive: Color(0xFF4A4844),
-    // Barely visible in dark.
-    pageShadow: Color(0x16000000),
-    textSelection: Color(0xFFB8D4FD),
-    match: Color(0x66FFFF3B),
-    currentMatch: Color(0xFFFFFF3B),
-    placeholder: Color(0xFFFFFFFF),
-    handle: Color(0xFF316EC8),
-  );
-
+  /// The colours in effect under [context].
   static PreviewColors of(BuildContext context) =>
-      MediaQuery.maybePlatformBrightnessOf(context) == Brightness.dark
-      ? dark
-      : light;
+      PreviewColors.from(AmalfiTheme.of(context));
 }
 
 /// The highlight colours of the toolbar's menu. Yellow is the measured colour on white paper;

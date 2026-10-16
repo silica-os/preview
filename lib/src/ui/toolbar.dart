@@ -1,11 +1,12 @@
-// The toolbar (PREVIEW-01 › Title bar and toolbar): 52 pt, glass over the content that scrolls
-// under it; Ossido draws the window buttons. Left to right: the view menu button (the sidebar
-// glyph and a chevron, opening the view menu) in a 57 pt slot at x 92; the title block from
-// x 164 (the name, 13 pt bold, over a second line: "Page N of M", "Edited", "N documents");
-// then the zoom group (out, actual size, in), the highlight group (PDF; disabled for images),
-// Rotate, the markup circle, the inspector, and the search field filling the rest. When the
-// window is too narrow the search field becomes a magnifier circle and the tools that do not
-// fit go into an overflow circle with a menu.
+// The toolbar (kit `Apps/Preview/Toolbar PDF`, `Toolbar Image`): 52 pt, flat on
+// `Surface/Window`, built from pieces; its controls are Glass/Regular capsules 32 pt tall.
+// Left to right: the window buttons' slot (Ossido draws them), the view piece (the sidebar
+// glyph and a chevron, opening the view menu), the title block (the name over a second line:
+// "Page N of M", "Edited", "N documents"; clicking it opens the title popover), then the zoom
+// group (out, actual size, in), the highlight group (PDF; disabled for images), Rotate, the
+// markup button, the inspector button and the search field. When the window is too narrow the
+// search field becomes a magnifier button and the tools that do not fit go into an overflow
+// button with a menu.
 //
 // Not shown in Preview: remove background (#19) and form filling (#15), share (no share
 // service in Silica, #1).
@@ -18,6 +19,7 @@ import 'package:silica_ui/silica_ui.dart';
 import '../../l10n/app_localizations.dart';
 import '../model/viewer.dart';
 import '../style.dart';
+import 'menu_host.dart';
 import 'symbol.dart';
 
 /// What the toolbar's buttons do besides the controller's actions.
@@ -41,13 +43,13 @@ class ToolbarActions {
   /// Opens the title popover under the title (null: no popover, nothing open).
   final void Function(BuildContext anchor)? titlePopover;
 
-  /// The search field, at a width.
-  final Widget Function(double width) searchField;
+  /// The search field (200 wide).
+  final Widget Function() searchField;
 
-  /// The magnifier circle shown in a narrow window: opens the search field in a popover.
+  /// The magnifier button shown in a narrow window: opens the search field in a popover.
   final void Function(BuildContext anchor) collapsedSearch;
 
-  /// The key of the magnifier circle (⌘F opens its popover).
+  /// The key of the magnifier button (⌘F opens its popover).
   final GlobalKey? searchCircleKey;
 
   /// The highlight button and its menu chevron (null: not offered); [highlighting]: on.
@@ -60,13 +62,12 @@ class ToolbarActions {
   final bool markupShown;
 }
 
-/// One tool of the right side: its key, its width with the gap after it, and how to build it
-/// or list it in the overflow menu.
+/// One tool of the right side: its width (a piece, 4 pt of padding on each side), and how to
+/// build it or list it in the overflow menu.
 class _Tool {
-  const _Tool(this.id, this.width, this.gap, this.build, this.menu);
+  const _Tool(this.id, this.width, this.build, this.menu);
   final String id;
   final double width;
-  final double gap;
   final Widget Function() build;
   final MenuEntry Function() menu;
 }
@@ -93,8 +94,6 @@ class PreviewToolbar extends StatefulWidget {
 
 class _PreviewToolbarState extends State<PreviewToolbar> {
   OverlayEntry? _menu;
-  bool _hovered = false;
-  bool _titleHovered = false;
 
   @override
   void dispose() {
@@ -115,10 +114,9 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
     final at = box.localToGlobal(Offset(0, box.size.height + 4));
     _menu = OverlayEntry(
       builder: (_) => Positioned.fill(
-        child: MenuHost(
+        child: PreviewMenuHost(
           key: key,
           anchor: at,
-          opaque: true,
           entries: entries,
           onDismissed: _closeMenu,
         ),
@@ -127,38 +125,41 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
     overlay.insert(_menu!);
   }
 
-  Widget Function(Color) _icon(
-    String name,
-    String fallback, {
-    double size = 18,
-  }) =>
-      (color) =>
-          PreviewSymbol(name, size: size, color: color, fallback: fallback);
+  Widget _icon(String name, String fallback, {double size = 16}) => Builder(
+    builder: (context) => PreviewSymbol(
+      name,
+      size: size,
+      color: IconTheme.of(context).color ?? const Color(0xFF000000),
+      fallback: fallback,
+    ),
+  );
 
-  Widget _tip(String message, Widget child) =>
-      SilicaTooltip(message: message, child: child);
+  /// A piece holding one control: 4 pt on each side.
+  Widget _piece(Widget child) => AmalfiToolbarPiece(child: child);
 
-  /// The width the title block needs.
-  double _titleWidth(TextStyle title, TextStyle subtitle) {
-    double measure(String text, TextStyle style) {
-      final painter = TextPainter(
-        text: TextSpan(text: text, style: style),
-        textDirection: TextDirection.ltr,
-        maxLines: 1,
-      )..layout();
-      final w = painter.width;
-      painter.dispose();
-      return w;
-    }
+  /// A one-segment capsule (a 32 pt circle), `chosen` when its function is on.
+  Widget _button({
+    required Key key,
+    required String name,
+    required String fallback,
+    required String label,
+    required bool enabled,
+    required VoidCallback? onTap,
+    bool chosen = false,
+  }) => AmalfiActionSegments(
+    key: key,
+    selected: chosen ? const {0} : const {},
+    onPressed: enabled && onTap != null ? (_) => onTap() : null,
+    segments: [
+      AmalfiSegment.icon(
+        _icon(name, fallback),
+        semanticLabel: label,
+        tooltip: label,
+      ),
+    ],
+  );
 
-    final sub = widget.subtitle;
-    return math.max(
-          measure(widget.title, title),
-          sub == null ? 0 : measure(sub, subtitle),
-        ) +
-        // The document icon before it and the chevron after it, on hover.
-        (widget.actions.titlePopover == null ? 0 : 14);
-  }
+  static const double _controlsWidth = AmalfiToolbarPieceMetrics.controlsWidth;
 
   List<_Tool> _tools(AppLocalizations l) {
     final c = widget.controller;
@@ -168,32 +169,27 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
       if (a.highlight != null)
         _Tool(
           'highlight',
-          PreviewMetrics.highlightSegment +
-              PreviewMetrics.highlightMenuSegment +
-              PreviewMetrics.separator +
-              PreviewMetrics.capsuleOutline,
-          PreviewMetrics.gapAfterHighlight,
+          PreviewMetrics.highlightPiece,
           () => Builder(
-            builder: (anchor) => _tip(
-              l.highlightTooltip,
-              ToolbarCapsule(
+            builder: (anchor) => _piece(
+              AmalfiActionSegments(
                 key: const ValueKey('highlight'),
-                separators: true,
-                children: [
-                  ToolbarSegment(
-                    key: const ValueKey('highlight toggle'),
-                    width: PreviewMetrics.highlightSegment,
-                    enabled: c.isPdf,
-                    chosen: a.highlighting,
-                    onTap: a.highlight,
-                    icon: _icon('paintbrush', '✎'),
+                selected: a.highlighting ? const {0} : const {},
+                // The chevron's segment opens the colour menu, the other toggles.
+                onPressed: c.isPdf
+                    ? (i) => i == 0
+                          ? a.highlight?.call()
+                          : a.highlightMenu?.call(anchor)
+                    : null,
+                segments: [
+                  AmalfiSegment.icon(
+                    _icon('paintbrush', '✎'),
+                    semanticLabel: l.highlightTooltip,
+                    tooltip: l.highlightTooltip,
                   ),
-                  ToolbarSegment(
-                    key: const ValueKey('highlight menu'),
-                    width: PreviewMetrics.highlightMenuSegment,
-                    enabled: c.isPdf,
-                    onPress: () => a.highlightMenu?.call(anchor),
-                    icon: _icon('chevron-down', '⌄', size: 11),
+                  AmalfiSegment.icon(
+                    _icon('chevron-down', '⌄', size: 12),
+                    semanticLabel: l.highlightTooltip,
                   ),
                 ],
               ),
@@ -207,20 +203,15 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
         ),
       _Tool(
         'rotate',
-        PreviewMetrics.rotateSegment + PreviewMetrics.capsuleOutline,
-        PreviewMetrics.gapAfterTools,
-        () => _tip(
-          l.rotateTooltip,
-          ToolbarCapsule(
+        PreviewMetrics.buttonPiece,
+        () => _piece(
+          _button(
             key: const ValueKey('rotate'),
-            children: [
-              ToolbarSegment(
-                width: PreviewMetrics.rotateSegment,
-                enabled: open,
-                onTap: c.rotateLeft,
-                icon: _icon('arrow-counterclockwise', '↺'),
-              ),
-            ],
+            name: 'arrow-counterclockwise',
+            fallback: '↺',
+            label: l.rotateTooltip,
+            enabled: open,
+            onTap: c.rotateLeft,
           ),
         ),
         () => MenuAction(l.rotateLeft, enabled: open, onSelected: c.rotateLeft),
@@ -228,21 +219,16 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
       if (a.markup != null)
         _Tool(
           'markup',
-          PreviewMetrics.markupButton + PreviewMetrics.capsuleOutline,
-          PreviewMetrics.gapAfterMarkup,
-          () => _tip(
-            l.markupTooltip,
-            ToolbarCapsule(
+          PreviewMetrics.buttonPiece,
+          () => _piece(
+            _button(
               key: const ValueKey('markup'),
-              children: [
-                ToolbarSegment(
-                  width: PreviewMetrics.markupButton,
-                  enabled: open,
-                  chosen: a.markupShown,
-                  onTap: a.markup,
-                  icon: _icon('pencil', '✎'),
-                ),
-              ],
+              name: 'pencil',
+              fallback: '✎',
+              label: l.markupTooltip,
+              enabled: open,
+              chosen: a.markupShown,
+              onTap: a.markup,
             ),
           ),
           () => MenuAction(
@@ -250,26 +236,19 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
             enabled: open,
             onSelected: a.markup,
           ),
-        )
-      else
-        const _Tool('gap', 0, PreviewMetrics.gapAfterMarkup, _none, _noMenu),
+        ),
       _Tool(
         'inspector',
-        PreviewMetrics.inspectorSegment + PreviewMetrics.capsuleOutline,
-        PreviewMetrics.gapBeforeSearch,
-        () => _tip(
-          l.inspectorTooltip,
-          ToolbarCapsule(
+        PreviewMetrics.buttonPiece,
+        () => _piece(
+          _button(
             key: const ValueKey('inspector button'),
-            children: [
-              ToolbarSegment(
-                width: PreviewMetrics.inspectorSegment,
-                enabled: open,
-                chosen: c.inspector,
-                onTap: c.toggleInspector,
-                icon: _icon('info', 'ⓘ'),
-              ),
-            ],
+            name: 'info',
+            fallback: 'ⓘ',
+            label: l.inspectorTooltip,
+            enabled: open,
+            chosen: c.inspector,
+            onTap: c.toggleInspector,
           ),
         ),
         () => MenuAction(
@@ -281,296 +260,188 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
     ];
   }
 
-  static Widget _none() => const SizedBox.shrink();
-  static MenuEntry _noMenu() => const MenuDivider();
+  /// The width of `text` in `style`.
+  static double _measure(String text, TextStyle style) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    final w = painter.width;
+    painter.dispose();
+    return w;
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final c = widget.controller;
-    final colors = ToolbarColors.of(context);
+    final a = widget.actions;
     final open = c.document != null;
-    final titleStyle = previewText(
-      PreviewMetrics.titleSize,
-      weight: FontWeight.w700,
-      color: widget.active ? colors.title : colors.titleInactive,
-    );
-    final subtitleStyle = previewText(
-      PreviewMetrics.subtitleSize,
-      color: colors.titleInactive,
-    );
-    final zoomWidth =
-        PreviewMetrics.zoomOutSegment +
-        PreviewMetrics.actualSizeSegment +
-        PreviewMetrics.zoomInSegment +
-        2 * PreviewMetrics.separator +
-        PreviewMetrics.capsuleOutline;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: ToolbarScope(
-        active: widget.active,
-        hovered: _hovered,
-        child: WindowDragArea(
-          child: SizedBox(
-            key: const ValueKey('toolbar'),
-            height: toolbarHeight,
-            child: LayoutBuilder(
-              builder: (context, box) {
-                final width = box.maxWidth;
-                final tools = open ? _tools(l) : <_Tool>[];
-                // Fit: the title keeps what it needs (at least titleMinWidth); then the search
-                // field shrinks to its minimum, collapses to a circle, and the tools move into
-                // the overflow menu from the right.
-                final titleNeed = math.max(
-                  PreviewMetrics.titleMinWidth,
-                  _titleWidth(titleStyle, subtitleStyle),
-                );
-                double toolsWidth(List<_Tool> shown) =>
-                    shown.fold(0, (sum, t) => sum + t.width + t.gap);
-                const fixedLeft = PreviewMetrics.titleLeft;
-                final zoom = open ? zoomWidth + PreviewMetrics.gapAfterZoom : 0;
-                var shown = [...tools];
-                final hidden = <_Tool>[];
-                var search = PreviewMetrics.searchMinWidth;
-                var collapsed = false;
-                double need() =>
-                    fixedLeft +
-                    titleNeed +
-                    zoom +
-                    toolsWidth(shown) +
-                    (hidden.isEmpty
-                        ? 0
-                        : PreviewMetrics.roundButton +
-                              PreviewMetrics.gapBeforeSearch) +
-                    (open ? search : 0) +
-                    PreviewMetrics.toolbarTrailing;
-                if (need() > width && open) {
-                  collapsed = true;
-                  search =
-                      PreviewMetrics.roundButton +
-                      PreviewMetrics.capsuleOutline;
-                }
-                while (need() > width && shown.any((t) => t.width > 0)) {
-                  final last = shown.lastIndexWhere((t) => t.width > 0);
-                  hidden.insert(0, shown.removeAt(last));
-                }
-                if (!collapsed && open) {
-                  // The search field takes the rest beyond the title's need, within its range.
-                  search = (width - need() + search).clamp(
-                    PreviewMetrics.searchMinWidth,
-                    PreviewMetrics.searchMaxWidth,
-                  );
-                }
-                return Row(
-                  children: [
-                    const SizedBox(width: PreviewMetrics.viewSlotLeft),
-                    SizedBox(
-                      width: PreviewMetrics.viewSlot,
-                      child: open
-                          ? Center(
-                              child: Builder(
-                                builder: (anchor) => _tip(
-                                  l.viewMenuTooltip,
-                                  ToolbarCapsule(
-                                    key: const ValueKey('view menu button'),
-                                    children: [
-                                      ToolbarSegment(
-                                        width: PreviewMetrics.viewButton,
-                                        onPress: () => _openMenu(
-                                          anchor,
-                                          widget.actions.viewMenu(),
-                                          const ValueKey('view menu'),
-                                        ),
-                                        icon: (color) => Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            _icon('sidebar', '▯')(color),
-                                            const SizedBox(width: 2),
-                                            _icon('chevron-down', '⌄', size: 9)(
-                                              color,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            )
-                          : null,
+    final colors = AmalfiTheme.of(context).colors;
+    final titleStyle = AmalfiType.headline(color: colors.textPrimary);
+    final subtitleStyle = AmalfiType.caption(color: colors.textTertiary);
+    return WindowDragArea(
+      child: SizedBox(
+        key: const ValueKey('toolbar'),
+        height: AmalfiToolbarMetrics.toolbarHeight,
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final width = box.maxWidth;
+            final tools = open ? _tools(l) : <_Tool>[];
+            // Fit: the title keeps what it needs (at least titleMinWidth); then the search
+            // field collapses into its button, and the tools move into the overflow menu
+            // from the right.
+            final sub = widget.subtitle;
+            final titleNeed = math.max(
+              PreviewMetrics.titleMinWidth,
+              math.max(
+                    _measure(widget.title, titleStyle),
+                    sub == null ? 0 : _measure(sub, subtitleStyle),
+                  ) +
+                  2 * AmalfiToolbarPieceMetrics.titlePadding,
+            );
+            final shown = [...tools];
+            final hidden = <_Tool>[];
+            var collapsed = false;
+            double need() =>
+                _controlsWidth +
+                (open ? PreviewMetrics.viewPiece : 0) +
+                titleNeed +
+                (open ? PreviewMetrics.zoomPiece : 0) +
+                shown.fold<double>(0, (sum, t) => sum + t.width) +
+                (hidden.isEmpty ? 0 : PreviewMetrics.buttonPiece) +
+                (open
+                    ? (collapsed
+                          ? PreviewMetrics.buttonPiece
+                          : PreviewMetrics.searchPiece)
+                    : 0) +
+                AmalfiToolbarMetrics.unifiedPadding.right;
+            if (open && need() > width) collapsed = true;
+            while (open && need() > width && shown.isNotEmpty) {
+              hidden.insert(0, shown.removeLast());
+            }
+            return AmalfiToolbar(
+              active: widget.active,
+              children: [
+                // Ossido draws the window buttons here, at x 18 (measured).
+                const SizedBox(width: _controlsWidth),
+                if (open)
+                  Builder(
+                    builder: (anchor) => _piece(
+                      AmalfiActionSegments(
+                        key: const ValueKey('view menu button'),
+                        onPressed: (_) => _openMenu(
+                          anchor,
+                          a.viewMenu(),
+                          const ValueKey('view menu'),
+                        ),
+                        segments: [
+                          AmalfiSegment.icon(
+                            _icon('sidebar', '▯'),
+                            semanticLabel: l.viewMenuTooltip,
+                            tooltip: l.viewMenuTooltip,
+                          ),
+                          AmalfiSegment.icon(
+                            _icon('chevron-down', '⌄', size: 12),
+                            semanticLabel: l.viewMenuTooltip,
+                            tooltip: l.viewMenuTooltip,
+                          ),
+                        ],
+                      ),
                     ),
-                    Expanded(child: _title(titleStyle, subtitleStyle)),
-                    if (open) ...[
-                      _tip(
-                        l.zoomTooltip,
-                        ToolbarCapsule(
-                          key: const ValueKey('zoom'),
-                          separators: true,
-                          children: [
-                            ToolbarSegment(
-                              key: const ValueKey('zoom out'),
-                              width: PreviewMetrics.zoomOutSegment,
-                              enabled: c.canZoomOut,
-                              onTap: c.zoomOut,
-                              icon: _icon('zoom-out', '−'),
-                            ),
-                            ToolbarSegment(
-                              key: const ValueKey('actual size'),
-                              width: PreviewMetrics.actualSizeSegment,
-                              enabled: !c.atActualSize,
-                              onTap: () => c.actualSize(fromToolbar: true),
-                              icon: (color) => Text(
-                                '1:1',
-                                style: previewText(
-                                  12,
-                                  color: color,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            ToolbarSegment(
-                              key: const ValueKey('zoom in'),
-                              width: PreviewMetrics.zoomInSegment,
-                              enabled: c.canZoomIn,
-                              onTap: c.zoomIn,
-                              icon: _icon('zoom-in', '+'),
-                            ),
-                          ],
+                  ),
+                Expanded(child: open ? _title() : Center(child: _title())),
+                if (open) ...[
+                  _piece(
+                    AmalfiActionSegments(
+                      key: const ValueKey('zoom'),
+                      onPressed: (i) => switch (i) {
+                        0 => c.zoomOut(),
+                        1 => c.actualSize(fromToolbar: true),
+                        _ => c.zoomIn(),
+                      },
+                      segments: [
+                        AmalfiSegment.icon(
+                          _icon('zoom-out', '−'),
+                          semanticLabel: l.zoomTooltip,
+                          tooltip: l.zoomTooltip,
+                          enabled: c.canZoomOut,
+                        ),
+                        AmalfiSegment.icon(
+                          _icon('fullscreen', '1:1'),
+                          semanticLabel: l.zoomTooltip,
+                          enabled: !c.atActualSize,
+                        ),
+                        AmalfiSegment.icon(
+                          _icon('zoom-in', '+'),
+                          semanticLabel: l.zoomTooltip,
+                          enabled: c.canZoomIn,
+                        ),
+                      ],
+                    ),
+                  ),
+                  for (final t in shown) t.build(),
+                  if (hidden.isNotEmpty)
+                    Builder(
+                      builder: (anchor) => _piece(
+                        _button(
+                          key: const ValueKey('overflow'),
+                          name: 'chevron-right',
+                          fallback: '»',
+                          label: l.overflowTooltip,
+                          enabled: true,
+                          onTap: () => _openMenu(anchor, [
+                            for (final t in hidden) t.menu(),
+                          ], const ValueKey('overflow menu')),
                         ),
                       ),
-                      const SizedBox(width: PreviewMetrics.gapAfterZoom),
-                      for (final t in shown) ...[
-                        if (t.width > 0) t.build(),
-                        SizedBox(width: t.gap),
-                      ],
-                      if (hidden.isNotEmpty) ...[
-                        Builder(
-                          builder: (anchor) => ToolbarCapsule(
-                            key: const ValueKey('overflow'),
-                            children: [
-                              ToolbarSegment(
-                                width: PreviewMetrics.roundButton,
-                                onPress: () => _openMenu(anchor, [
-                                  for (final t in hidden)
-                                    if (t.width > 0) t.menu(),
-                                ], const ValueKey('overflow menu')),
-                                icon: _icon('chevron-right', '»', size: 14),
-                              ),
-                            ],
-                          ),
+                    ),
+                  if (collapsed)
+                    Builder(
+                      key: a.searchCircleKey,
+                      builder: (anchor) => _piece(
+                        _button(
+                          key: const ValueKey('search circle'),
+                          name: 'search',
+                          fallback: '⌕',
+                          label: l.searchPlaceholder,
+                          enabled: c.isPdf,
+                          onTap: () => a.collapsedSearch(anchor),
                         ),
-                        const SizedBox(width: PreviewMetrics.gapBeforeSearch),
-                      ],
-                      if (collapsed)
-                        Builder(
-                          key: widget.actions.searchCircleKey,
-                          builder: (anchor) => ToolbarCapsule(
-                            key: const ValueKey('search circle'),
-                            children: [
-                              ToolbarSegment(
-                                width: PreviewMetrics.roundButton,
-                                enabled: c.isPdf,
-                                onPress: () =>
-                                    widget.actions.collapsedSearch(anchor),
-                                icon: _icon('search', '⌕'),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        widget.actions.searchField(search),
-                    ],
-                    const SizedBox(width: PreviewMetrics.toolbarTrailing),
-                  ],
-                );
-              },
-            ),
-          ),
+                      ),
+                    )
+                  else
+                    _piece(a.searchField()),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  /// The gap between the view menu slot and the title (x 149 to 164); the document icon
-  /// shows in it on hover.
-  static const double _titleGap =
-      PreviewMetrics.titleLeft -
-      PreviewMetrics.viewSlotLeft -
-      PreviewMetrics.viewSlot;
-
-  Widget _title(TextStyle titleStyle, TextStyle subtitleStyle) {
+  /// The title block (the name over the second line); clicking it opens the title popover.
+  Widget _title() {
     final popover = widget.actions.titlePopover;
-    final colors = ToolbarColors.of(context);
-    final text = Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          widget.title,
-          key: const ValueKey('title'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: titleStyle,
-        ),
-        if (widget.subtitle case final subtitle?)
-          Text(
-            subtitle,
-            key: const ValueKey('subtitle'),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: subtitleStyle,
-          ),
-      ],
+    final open = widget.controller.document != null;
+    final block = AmalfiTitlePiece(
+      title: widget.title,
+      subtitle: widget.subtitle,
+      active: widget.active,
+      fill: open,
     );
-    if (popover == null) {
-      return Padding(
-        padding: const EdgeInsets.only(left: _titleGap),
-        child: Align(alignment: Alignment.centerLeft, child: text),
-      );
-    }
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _titleHovered = true),
-        onExit: (_) => setState(() => _titleHovered = false),
-        child: Builder(
-          builder: (anchor) => GestureDetector(
-            key: const ValueKey('title block'),
-            behavior: HitTestBehavior.opaque,
-            onTap: () => popover(anchor),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // The document icon and the chevron show on hover.
-                SizedBox(
-                  width: _titleGap,
-                  child: Opacity(
-                    opacity: _titleHovered ? 1 : 0,
-                    child: PreviewSymbol(
-                      'doc',
-                      size: 12,
-                      color: colors.titleInactive,
-                      fallback: '▢',
-                    ),
-                  ),
-                ),
-                Flexible(child: text),
-                const SizedBox(width: 4),
-                Opacity(
-                  key: const ValueKey('title chevron'),
-                  opacity: _titleHovered ? 1 : 0,
-                  child: PreviewSymbol(
-                    'chevron-down',
-                    size: 10,
-                    color: colors.titleInactive,
-                    fallback: '⌄',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+    final placed = open
+        ? Padding(padding: const EdgeInsets.only(left: 8), child: block)
+        : block;
+    if (popover == null) return placed;
+    return Builder(
+      builder: (anchor) => GestureDetector(
+        key: const ValueKey('title block'),
+        behavior: HitTestBehavior.opaque,
+        onTap: () => popover(anchor),
+        child: placed,
       ),
     );
   }

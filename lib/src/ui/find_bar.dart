@@ -1,6 +1,6 @@
-// The find bar (PREVIEW-02 › Search): a 36 pt band under the toolbar while a search is shown.
-// "Sort by" with two toggles (by number of matches, by page), "Found on N pages", previous and
-// next, and Done (50 × 26), which ends the search.
+// The find bar (kit `Apps/Preview/PDF Search`: 36 pt and a 1 pt separator under the toolbar while
+// a search is shown): "Sort by" with two choices (by number of matches, by page), "Found on N
+// pages", previous and next, and Done, which ends the search.
 
 import 'package:flutter/widgets.dart';
 import 'package:silica_ui/silica_ui.dart';
@@ -24,62 +24,79 @@ class FindBar extends StatelessWidget {
     final status = !c.searchDone && c.matches.isEmpty
         ? l.searching
         : (c.matches.isEmpty ? l.noMatches : l.foundOnPages(pages));
-    Widget icon(String name, String fallback, Color color) =>
-        PreviewSymbol(name, size: 12, color: color, fallback: fallback);
-    return SizedBox(
-      key: const ValueKey('find bar'),
-      height: PreviewMetrics.findBarHeight,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          children: [
-            Text(l.sortBy, style: previewText(11, color: colors.secondary)),
-            const SizedBox(width: 6),
-            SegmentedControl(
-              key: const ValueKey('search order'),
-              size: ControlSize.small,
-              segments: [
-                Segment(label: l.sortRank),
-                Segment(label: l.sortPage),
-              ],
-              selected: {c.searchOrder.index},
-              onChanged: (i) => c.setSearchOrder(SearchOrder.values[i]),
-            ),
-            const Spacer(),
-            Text(
-              status,
-              key: const ValueKey('find status'),
-              style: previewText(11, color: colors.secondary),
-            ),
-            const Spacer(),
-            SegmentedControl(
-              key: const ValueKey('find previous next'),
-              size: ControlSize.small,
-              mode: SegmentedMode.momentary,
-              segments: [
-                Segment(
-                  icon: (color) => icon('chevron-left', '‹', color),
-                  semanticLabel: l.findPrevious,
-                ),
-                Segment(
-                  icon: (color) => icon('chevron-right', '›', color),
-                  semanticLabel: l.findNext,
-                ),
-              ],
-              onChanged: c.matches.isEmpty
-                  ? null
-                  : (i) => i == 0 ? c.findPrevious() : c.findNext(),
-            ),
-            const SizedBox(width: 8),
-            SilicaButton(
-              key: const ValueKey('find done'),
-              label: l.done,
-              minWidth: PreviewMetrics.findDoneButton.width,
-              onPressed: onDone,
-            ),
-          ],
-        ),
+    Widget icon(String name, String fallback) => Builder(
+      builder: (context) => PreviewSymbol(
+        name,
+        size: 14,
+        color: IconTheme.of(context).color ?? colors.text,
+        fallback: fallback,
       ),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          key: const ValueKey('find bar'),
+          height: PreviewMetrics.findBarHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Text(
+                  l.sortBy,
+                  style: AmalfiType.caption(color: colors.secondary),
+                ),
+                const SizedBox(width: 8),
+                AmalfiSegmentedControl(
+                  key: const ValueKey('search order'),
+                  size: AmalfiControlSize.small,
+                  segments: [
+                    AmalfiSegment.text(l.sortRank),
+                    AmalfiSegment.text(l.sortPage),
+                  ],
+                  selected: {c.searchOrder.index},
+                  onChanged: (s) =>
+                      c.setSearchOrder(SearchOrder.values[s.first]),
+                ),
+                const Spacer(),
+                Text(
+                  status,
+                  key: const ValueKey('find status'),
+                  style: AmalfiType.callout(color: colors.secondary),
+                ),
+                const Spacer(),
+                AmalfiActionSegments(
+                  key: const ValueKey('find previous next'),
+                  size: AmalfiControlSize.small,
+                  segments: [
+                    AmalfiSegment.icon(
+                      icon('chevron-left', '‹'),
+                      semanticLabel: l.findPrevious,
+                      tooltip: l.findPrevious,
+                    ),
+                    AmalfiSegment.icon(
+                      icon('chevron-right', '›'),
+                      semanticLabel: l.findNext,
+                      tooltip: l.findNext,
+                    ),
+                  ],
+                  onPressed: c.matches.isEmpty
+                      ? null
+                      : (i) => i == 0 ? c.findPrevious() : c.findNext(),
+                ),
+                const SizedBox(width: 16),
+                AmalfiPushButton(
+                  key: const ValueKey('find done'),
+                  label: l.done,
+                  size: AmalfiControlSize.small,
+                  onPressed: onDone,
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 1, child: ColoredBox(color: colors.sidebarLine)),
+      ],
     );
   }
 }

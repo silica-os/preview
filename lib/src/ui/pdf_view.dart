@@ -287,11 +287,16 @@ class _PageTileState extends State<PageTile> {
         child: Container(
           width: widget.size.width,
           height: widget.size.height,
+          // `Apps/Preview/Page`: the paper, a 1 pt border inside and the shadow (0, 2, blur 8).
+          foregroundDecoration: BoxDecoration(
+            border: Border.all(color: colors.pageBorder),
+          ),
           decoration: BoxDecoration(
             color: colors.placeholder,
             boxShadow: [
               BoxShadow(
                 color: colors.pageShadow,
+                offset: const Offset(0, 2),
                 blurRadius: PreviewMetrics.pageShadow,
               ),
             ],
@@ -423,10 +428,11 @@ class PageThumbnail extends StatelessWidget {
     return Container(
       width: size.width * scale,
       height: size.height * scale,
-      decoration: BoxDecoration(
-        color: colors.placeholder,
-        boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 2)],
+      // `Apps/Preview/Page Thumb`: the paper and a 1 pt border inside, no shadow.
+      foregroundDecoration: BoxDecoration(
+        border: Border.all(color: colors.pageBorder),
       ),
+      decoration: BoxDecoration(color: colors.placeholder),
       child: image == null
           ? null
           : RotatedBox(

@@ -27,6 +27,7 @@ import 'contact_sheet.dart';
 import 'find_bar.dart';
 import 'image_view.dart';
 import 'inspector.dart';
+import 'menu_host.dart';
 import 'markup_bar.dart';
 import 'menus.dart';
 import 'notes.dart';
@@ -565,10 +566,9 @@ class PreviewWindowState extends State<PreviewWindow>
     _menu?.remove();
     _menu = OverlayEntry(
       builder: (_) => Positioned.fill(
-        child: MenuHost(
+        child: PreviewMenuHost(
           key: key ?? const ValueKey('context menu'),
           anchor: at,
-          opaque: true,
           entries: entries,
           onDismissed: () {
             _menu?.remove();
@@ -791,9 +791,8 @@ class PreviewWindowState extends State<PreviewWindow>
     _popover?.close();
     _popover = showPopover(
       anchor,
-      size: const Size(PreviewMetrics.searchMinWidth + 24, 62),
-      builder: (context, handle) =>
-          Center(child: _searchField(PreviewMetrics.searchMinWidth)),
+      size: const Size(PreviewMetrics.searchPiece + 24, 64),
+      builder: (context, handle) => Center(child: _searchField()),
     );
     // Once the popover is built, the field takes the keyboard.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -802,21 +801,19 @@ class PreviewWindowState extends State<PreviewWindow>
     WidgetsBinding.instance.ensureVisualUpdate();
   }
 
-  Widget _searchField(double width) {
+  Widget _searchField() {
     final l = AppLocalizations.of(context);
-    return SilicaSearchField(
+    return AmalfiSearchField(
       key: const ValueKey('search field'),
-      labels: SearchFieldLabels(
-        placeholder: l.searchPlaceholder,
-        clear: l.searchClear,
-      ),
-      style: SearchFieldStyle.toolbar,
-      width: width,
+      size: AmalfiFieldSize.large,
+      width: PreviewMetrics.searchPiece - 8,
+      placeholder: l.searchPlaceholder,
+      clearLabel: l.searchClear,
       enabled: c.isPdf,
       controller: _search,
       focusNode: _searchFocus,
       onSubmitted: _runSearch,
-      onCancel: _closeSearch,
+      onCleared: _closeSearch,
     );
   }
 
@@ -913,21 +910,29 @@ class PreviewWindowState extends State<PreviewWindow>
     if (c.document == null) {
       return ColoredBox(
         key: const ValueKey('empty'),
-        color: colors.imageCanvas,
+        color: colors.window,
         child: c.loading
             ? const SizedBox.expand()
             : Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    AmalfiSymbol(
+                      'doc',
+                      size: 32,
+                      color: colors.tertiary,
+                      fallback: const SizedBox.square(dimension: 32),
+                    ),
+                    const SizedBox(height: 20),
                     Text(
                       l.emptyTitle,
-                      style: previewText(15, color: colors.secondary),
+                      style: AmalfiType.title3(color: colors.tertiary),
                     ),
-                    const SizedBox(height: 12),
-                    SilicaButton(
+                    const SizedBox(height: 20),
+                    AmalfiPushButton(
                       key: const ValueKey('empty open'),
                       label: l.open,
+                      variant: AmalfiPushButtonVariant.primary,
                       onPressed: () => unawaited(open()),
                     ),
                   ],
@@ -986,13 +991,9 @@ class PreviewWindowState extends State<PreviewWindow>
         c.image?.name ??
         c.document?.title ??
         (locked == null ? l.appName : baseName(locked));
-    final band = (_toolbarShown ? toolbarHeight : 0.0);
-    final header =
-        (_findBar && c.searching ? PreviewMetrics.findBarHeight : 0.0) +
-        (_markupShown && c.document != null
-            ? PreviewMetrics.markupBarHeight
-            : 0.0);
-    final top = band + header;
+    // The toolbar and the strips under it are flat bars: the content starts below them
+    // (nothing scrolls under a bar).
+    const top = 0.0;
     final shown = Curves.easeInOut.transform(_sidebar.value);
     final sidebarWidth = sidebarWidthOf(c);
     final toolbar = PreviewToolbar(
@@ -1056,13 +1057,19 @@ class PreviewWindowState extends State<PreviewWindow>
             ],
           ),
         ),
-        if (c.inspector && c.document != null)
-          Padding(
-            padding: EdgeInsets.only(top: top),
-            child: Inspector(controller: c),
-          ),
+        if (c.inspector && c.document != null) Inspector(controller: c),
       ],
     );
+    final strips = [
+      if (_findBar && c.searching) FindBar(controller: c, onDone: _closeSearch),
+      if (_markupShown && c.document != null)
+        MarkupBar(
+          controller: c,
+          onAddShape: _addShape,
+          onAdjustSize: () => unawaited(_adjustSize()),
+          onNote: () => unawaited(_addNote()),
+        ),
+    ];
     return SilicaMenuBar(
       // The keys are handled by `_onKey` (⌘ and Ctrl, several keys per command): the bar shows them.
       shortcuts: false,
@@ -1071,39 +1078,21 @@ class PreviewWindowState extends State<PreviewWindow>
         focusNode: _focus,
         autofocus: true,
         onKeyEvent: _onKey,
-        child: ColoredBox(
-          color: colors.window,
+        // The window: `Surface/Window` and the corners; the compositor draws the shadow.
+        child: AmalfiWindow(
+          active: widget.active,
+          shadow: false,
           child: Stack(
             children: [
               Positioned.fill(
-                child: _toolbarShown
-                    ? ScrollUnderToolbar(
-                        toolbar: toolbar,
-                        active: widget.active,
-                        scrollPredicate: anyVerticalScrollUnderPredicate,
-                        header: header == 0
-                            ? null
-                            : Column(
-                                children: [
-                                  if (_findBar && c.searching)
-                                    FindBar(
-                                      controller: c,
-                                      onDone: _closeSearch,
-                                    ),
-                                  if (_markupShown && c.document != null)
-                                    MarkupBar(
-                                      controller: c,
-                                      onAddShape: _addShape,
-                                      onAdjustSize: () =>
-                                          unawaited(_adjustSize()),
-                                      onNote: () => unawaited(_addNote()),
-                                    ),
-                                ],
-                              ),
-                        headerHeight: header,
-                        body: (context, padding) => body,
-                      )
-                    : body,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_toolbarShown) toolbar,
+                    ...strips,
+                    Expanded(child: body),
+                  ],
+                ),
               ),
               if (_slideshow && c.document != null)
                 Positioned.fill(
@@ -1117,33 +1106,47 @@ class PreviewWindowState extends State<PreviewWindow>
                 ),
               if (_alert case (final title, final message, final buttons))
                 Positioned.fill(
-                  child: ColoredBox(
-                    color: const Color(0x33000000),
-                    child: Center(
-                      child: SizedBox(
-                        width: buttons == null
-                            ? null
-                            : PreviewMetrics.revertAlert.width,
-                        child: SilicaAlert(
-                          key: const ValueKey('alert'),
-                          title: title,
-                          message: message,
-                          opaque: true,
-                          buttons:
-                              buttons ??
-                              [
-                                AlertButton(
-                                  l.ok,
-                                  role: AlertRole.primary,
-                                  onPressed: () {
-                                    setState(() => _alert = null);
-                                    _focus.requestFocus();
+                  child: Stack(
+                    children: [
+                      const Positioned.fill(
+                        child: AbsorbPointer(child: AmalfiSheetScrim()),
+                      ),
+                      Center(
+                        child: SizedBox(
+                          width: AmalfiAlertMetrics.width,
+                          child: AmalfiAlert(
+                            key: const ValueKey('alert'),
+                            title: title,
+                            message: message,
+                            actions: [
+                              for (final b
+                                  in buttons ??
+                                      [
+                                        AlertButton(
+                                          l.ok,
+                                          role: AlertRole.primary,
+                                          onPressed: () {
+                                            setState(() => _alert = null);
+                                            _focus.requestFocus();
+                                          },
+                                        ),
+                                      ])
+                                AmalfiPushButton(
+                                  label: b.label,
+                                  variant: switch (b.role) {
+                                    AlertRole.primary =>
+                                      AmalfiPushButtonVariant.primary,
+                                    AlertRole.destructive =>
+                                      AmalfiPushButtonVariant.destructive,
+                                    _ => AmalfiPushButtonVariant.secondary,
                                   },
+                                  onPressed: b.onPressed,
                                 ),
-                              ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
             ],
@@ -1216,7 +1219,7 @@ class AnnotationStyleRow extends StatelessWidget {
   }
 }
 
-/// A note's popover (≈ 274 × 154, yellow): its text and Done.
+/// A note's popover: its text, editable, and Done.
 class NotePopover extends StatefulWidget {
   const NotePopover({super.key, required this.text, required this.onDone});
   final String text;
@@ -1240,34 +1243,29 @@ class _NotePopoverState extends State<NotePopover> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return ColoredBox(
-      color: const Color(0xFFFFE97A),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: SilicaTextField(
-                key: const ValueKey('note text'),
-                controller: _text,
-                autofocus: true,
-                maxLines: null,
-                bezel: FieldBezel.square,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerRight,
-              child: SilicaButton(
-                key: const ValueKey('note done'),
-                label: l.done,
-                onPressed: () => widget.onDone(_text.text),
-              ),
-            ),
-          ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 8,
+      children: [
+        AmalfiTextArea(
+          key: const ValueKey('note text'),
+          controller: _text,
+          autofocus: true,
+          size: Size(PreviewMetrics.notePopover.width - 32, 88),
+          semanticLabel: l.note,
         ),
-      ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: AmalfiPushButton(
+            key: const ValueKey('note done'),
+            label: l.done,
+            size: AmalfiControlSize.small,
+            variant: AmalfiPushButtonVariant.primary,
+            onPressed: () => widget.onDone(_text.text),
+          ),
+        ),
+      ],
     );
   }
 }

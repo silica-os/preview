@@ -66,56 +66,58 @@ class _TitlePopoverState extends State<TitlePopover> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final colors = PreviewColors.of(context);
+    final colors = AmalfiTheme.of(context).colors;
     final slash = widget.path.lastIndexOf('/');
     final folder = slash <= 0 ? '/' : widget.path.substring(0, slash);
     Widget row(String label, Widget child) => Row(
       children: [
         SizedBox(
-          width: 90,
+          width: 72,
           child: Text(
             label,
             textAlign: TextAlign.right,
-            style: previewText(13, color: colors.text),
+            style: AmalfiType.body(color: colors.textSecondary),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Expanded(child: child),
       ],
     );
-    return SizedBox.fromSize(
+    return SizedBox(
       key: const ValueKey('title popover'),
-      size: PreviewMetrics.titlePopover,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 28, 24, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            row(
-              l.nameLabel,
-              SilicaTextField(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          row(
+            l.nameLabel,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: AmalfiTextField(
                 key: const ValueKey('rename field'),
                 controller: _name,
                 autofocus: true,
+                width: PreviewMetrics.titlePopover.width - 32 - 84,
+                semanticLabel: l.nameLabel,
                 onSubmitted: (_) {
                   _commit();
                   widget.close();
                 },
               ),
             ),
-            const SizedBox(height: 14),
-            row(
-              l.whereLabel,
-              Text(
-                folder,
-                key: const ValueKey('where'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: previewText(13, color: colors.secondary),
-              ),
+          ),
+          row(
+            l.whereLabel,
+            Text(
+              folder,
+              key: const ValueKey('where'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AmalfiType.body(color: colors.textPrimary),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

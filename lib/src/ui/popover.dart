@@ -1,6 +1,6 @@
-// A popover opened from a control by code (the title, the markup buttons): silica_ui's popover
-// body with its arrow towards the control, placed below it (or where it fits), closing on a
-// click outside and on Esc.
+// A popover opened from a control by code (the title, the markup buttons, the note): an Amalfi
+// popover (Glass/Thick, radius 16, an arrow towards the control) placed below it (or where it
+// fits), closing on a click outside and on Esc.
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -26,14 +26,15 @@ class PopoverHandle {
   }
 }
 
-/// Shows `builder`'s content in a popover of `size` under the widget of `anchor`. `builder`
-/// gets the handle to close it.
+/// Shows `builder`'s content in a popover whose body is `size` (the content with its 16 pt
+/// padding) under the widget of `anchor`; the arrow adds its depth on the anchor's side.
+/// `builder` gets the handle to close it.
 PopoverHandle? showPopover(
   BuildContext anchor, {
   required Size size,
   required Widget Function(BuildContext context, PopoverHandle handle) builder,
   Key? key,
-  TipEdge preferred = TipEdge.bottom,
+  AmalfiPopoverPlacement preferred = AmalfiPopoverPlacement.below,
   VoidCallback? onClosed,
 }) {
   final box = anchor.findRenderObject();
@@ -42,47 +43,71 @@ PopoverHandle? showPopover(
   final overlayBox = overlayState.context.findRenderObject();
   if (overlayBox is! RenderBox) return null;
   final rect = box.localToGlobal(Offset.zero, ancestor: overlayBox) & box.size;
+  final theme = AmalfiTheme.of(anchor);
   late final PopoverHandle handle;
   final scope = FocusScopeNode(debugLabel: 'popover');
+  final outer = Size(
+    size.width +
+        (preferred == AmalfiPopoverPlacement.leading ||
+                preferred == AmalfiPopoverPlacement.trailing
+            ? AmalfiPopoverMetrics.arrowDepth
+            : 0),
+    size.height +
+        (preferred == AmalfiPopoverPlacement.below ||
+                preferred == AmalfiPopoverPlacement.above
+            ? AmalfiPopoverMetrics.arrowDepth
+            : 0),
+  );
   final entry = OverlayEntry(
     builder: (context) {
-      final place = placePopover(
+      final place = amalfiPopoverLayout(
         anchor: rect,
-        size: size,
-        bounds: Offset.zero & overlayBox.size,
-        preferred: preferred,
+        size: outer,
+        bounds: overlayBox.size,
+        placement: preferred,
+        textDirection: Directionality.maybeOf(context) ?? TextDirection.ltr,
       );
-      return Stack(
-        children: [
-          Positioned.fill(
-            child: Listener(
-              behavior: HitTestBehavior.translucent,
-              onPointerDown: (e) {
-                if (!place.rect.contains(e.localPosition)) handle.close();
-              },
-            ),
-          ),
-          Positioned.fromRect(
-            rect: place.rect,
-            child: FocusScope(
-              node: scope,
-              child: CallbackShortcuts(
-                bindings: {
-                  const SingleActivator(LogicalKeyboardKey.escape):
-                      handle.close,
+      return AmalfiTheme(
+        brightness: theme.brightness,
+        app: theme.app,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: (e) {
+                  if (!(place.offset & outer).contains(e.localPosition)) {
+                    handle.close();
+                  }
                 },
-                child: PopoverPanel(
-                  key: key,
-                  edge: place.edge,
-                  tip: place.tip,
-                  child: Builder(
-                    builder: (context) => builder(context, handle),
+              ),
+            ),
+            Positioned(
+              left: place.offset.dx,
+              top: place.offset.dy,
+              width: outer.width,
+              height: outer.height,
+              child: FocusScope(
+                node: scope,
+                child: CallbackShortcuts(
+                  bindings: {
+                    const SingleActivator(LogicalKeyboardKey.escape):
+                        handle.close,
+                  },
+                  child: AmalfiPopover(
+                    key: key,
+                    arrowEdge: amalfiPopoverArrowEdge(place.placement),
+                    arrowOffset: place.arrowOffset,
+                    opaque: true,
+                    child: Builder(
+                      builder: (context) => builder(context, handle),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     },
   );

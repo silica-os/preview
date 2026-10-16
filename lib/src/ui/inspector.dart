@@ -1,9 +1,10 @@
 // The inspector (Tools › Show Inspector, ⌘I, or the toolbar's button; PREVIEW-02 › Files): a
-// 270 pt pane inside the window on the right, with four tabs on a segmented control at its top
+// 260 pt pane inside the window on the right (kit `Apps/Preview/Inspector`), with four tabs on a
+// segmented control at its top
 // (it remembers the last one): General (name, kind, size, modified; the image's dimensions and
 // colour, or the PDF's pages, page size and metadata), More Info (sections that fold: the
 // image's properties, its EXIF fields), Keywords (a PDF's, editable with + and −), and
-// Annotations (page, kind, author, date). Rows sit in 250 pt rounded group boxes, 37 pt apart.
+// Annotations (page, kind, author, date). Rows sit in rounded group boxes, 36 pt apart.
 
 import 'dart:async';
 import 'dart:io';
@@ -187,66 +188,72 @@ class _InspectorState extends State<Inspector> {
       InspectorTab.keywords => _keywords(l, colors),
       InspectorTab.annotations => _annotations(l, colors),
     };
+    Widget icon(String name, String fallback) => Builder(
+      builder: (context) => PreviewSymbol(
+        name,
+        size: 16,
+        color: IconTheme.of(context).color ?? colors.text,
+        fallback: fallback,
+      ),
+    );
     return Container(
       key: const ValueKey('inspector'),
       width: PreviewMetrics.inspectorWidth,
-      decoration: BoxDecoration(
-        color: colors.sidebar,
-        border: Border(left: BorderSide(color: colors.sidebarLine)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      color: colors.sidebar,
+      child: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
-            child: Center(
-              child: SegmentedControl(
-                key: const ValueKey('inspector tabs'),
-                segments: [
-                  Segment(
-                    icon: (color) => PreviewSymbol(
-                      'info',
-                      size: 14,
-                      color: color,
-                      fallback: 'i',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: PreviewMetrics.inspectorPadding,
+                  bottom: PreviewMetrics.inspectorPadding,
+                ),
+                child: Center(
+                  child: AmalfiSegmentedControl(
+                    key: const ValueKey('inspector tabs'),
+                    size: AmalfiControlSize.large,
+                    segments: [
+                      AmalfiSegment.icon(
+                        icon('info', 'i'),
+                        semanticLabel: l.inspectorGeneral,
+                        tooltip: l.inspectorGeneral,
+                      ),
+                      AmalfiSegment.icon(
+                        icon('list-bullet', '≡'),
+                        semanticLabel: l.inspectorMore,
+                        tooltip: l.inspectorMore,
+                      ),
+                      AmalfiSegment.icon(
+                        icon('tag', '#'),
+                        semanticLabel: l.inspectorKeywords,
+                        tooltip: l.inspectorKeywords,
+                      ),
+                      AmalfiSegment.icon(
+                        icon('pencil', '✎'),
+                        semanticLabel: l.inspectorAnnotations,
+                        tooltip: l.inspectorAnnotations,
+                      ),
+                    ],
+                    selected: {tab.index},
+                    onChanged: (s) => setState(
+                      () => Inspector.lastTab = InspectorTab.values[s.first],
                     ),
-                    semanticLabel: l.inspectorGeneral,
                   ),
-                  Segment(
-                    icon: (color) => PreviewSymbol(
-                      'list-bullet',
-                      size: 14,
-                      color: color,
-                      fallback: '≡',
-                    ),
-                    semanticLabel: l.inspectorMore,
-                  ),
-                  Segment(
-                    icon: (color) => PreviewSymbol(
-                      'tag',
-                      size: 14,
-                      color: color,
-                      fallback: '#',
-                    ),
-                    semanticLabel: l.inspectorKeywords,
-                  ),
-                  Segment(
-                    icon: (color) => PreviewSymbol(
-                      'pencil',
-                      size: 14,
-                      color: color,
-                      fallback: '✎',
-                    ),
-                    semanticLabel: l.inspectorAnnotations,
-                  ),
-                ],
-                selected: {tab.index},
-                onChanged: (i) =>
-                    setState(() => Inspector.lastTab = InspectorTab.values[i]),
+                ),
               ),
-            ),
+              Expanded(child: body),
+            ],
           ),
-          Expanded(child: body),
+          // The 1 pt edge along the leading side.
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 1,
+            child: ColoredBox(color: colors.sidebarLine),
+          ),
         ],
       ),
     );
@@ -259,41 +266,76 @@ class _InspectorState extends State<Inspector> {
     return exif < 0 ? rows : rows.sublist(0, exif);
   }
 
-  Widget _group(List<Widget> rows, PreviewColors colors) => Container(
-    width: PreviewMetrics.inspectorGroup,
-    margin: const EdgeInsets.only(bottom: 10),
-    decoration: BoxDecoration(
-      color: colors.window.withValues(alpha: 0.6),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Column(children: rows),
-  );
-
-  Widget _row(String label, String value, PreviewColors colors) => SizedBox(
-    height: PreviewMetrics.inspectorRow,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Row(
-        children: [
-          Text(label, style: previewText(12, color: colors.text)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: previewText(12, color: colors.secondary),
-            ),
+  /// Rows in a rounded box (`Surface/Raised`, a 1 pt border, radius 10), 36 pt apart with a
+  /// separator between them.
+  Widget _group(List<Widget> rows, PreviewColors colors) => Padding(
+    padding: const EdgeInsets.only(bottom: PreviewMetrics.inspectorGap),
+    child: DecoratedBox(
+      decoration: AmalfiShapeDecoration(
+        color: AmalfiTheme.of(context).colors.surfaceRaised,
+        shape: AmalfiSmoothBorder(
+          radius: PreviewMetrics.inspectorGroupRadius,
+          side: BorderSide(
+            color: AmalfiTheme.of(context).colors.lineBorder,
+            strokeAlign: BorderSide.strokeAlignInside,
           ),
-        ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Column(
+          children: [
+            for (final (i, row) in rows.indexed) ...[
+              if (i > 0)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: SizedBox(
+                    height: 1,
+                    child: ColoredBox(color: colors.sidebarLine),
+                  ),
+                ),
+              row,
+            ],
+          ],
+        ),
       ),
     ),
   );
 
+  Widget _row(String label, String value, PreviewColors colors) =>
+      ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: PreviewMetrics.inspectorRow - 1,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: AmalfiType.callout(color: colors.secondary)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.right,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AmalfiType.callout(color: colors.text),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  static const EdgeInsets _bodyPadding = EdgeInsets.only(
+    left: PreviewMetrics.inspectorPadding,
+    right: PreviewMetrics.inspectorPadding,
+  );
+
   Widget _rowsView(List<(String?, String)> rows, PreviewColors colors) =>
       ListView(
-        padding: const EdgeInsets.all(10),
+        padding: _bodyPadding,
         children: [
           _group([
             for (final (label, value) in rows)
@@ -319,7 +361,7 @@ class _InspectorState extends State<Inspector> {
     sections.add((title, current));
     return ListView(
       key: const ValueKey('more info'),
-      padding: const EdgeInsets.all(10),
+      padding: _bodyPadding,
       children: [
         for (final (title, items) in sections)
           if (items.isNotEmpty) ...[
@@ -335,23 +377,15 @@ class _InspectorState extends State<Inspector> {
                 height: 28,
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: 9,
-                      height: 9,
-                      child: OutlineTriangle(
-                        open: !_folded.contains(title),
-                        color: colors.secondary,
-                      ),
+                    AmalfiGlyph(
+                      _folded.contains(title)
+                          ? AmalfiGlyphs.chevronRight
+                          : AmalfiGlyphs.chevronDown,
+                      size: 12,
+                      color: colors.secondary,
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      title,
-                      style: previewText(
-                        12,
-                        color: colors.text,
-                        weight: FontWeight.w700,
-                      ),
-                    ),
+                    Text(title, style: AmalfiType.headline(color: colors.text)),
                   ],
                 ),
               ),
@@ -368,48 +402,65 @@ class _InspectorState extends State<Inspector> {
   Widget _keywords(AppLocalizations l, PreviewColors colors) {
     final words = c.keywords;
     final editable = c.isPdf && c.loader.writer != null;
+    final theme = AmalfiTheme.of(context).colors;
     return Padding(
-      padding: const EdgeInsets.all(10),
+      padding: _bodyPadding.copyWith(bottom: PreviewMetrics.inspectorPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: colors.window.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(10),
+            child: DecoratedBox(
+              decoration: AmalfiShapeDecoration(
+                color: theme.surfaceRaised,
+                shape: AmalfiSmoothBorder(
+                  radius: PreviewMetrics.inspectorGroupRadius,
+                  side: BorderSide(
+                    color: theme.lineBorder,
+                    strokeAlign: BorderSide.strokeAlignInside,
+                  ),
+                ),
               ),
               child: words.isEmpty
                   ? Center(
                       child: Text(
                         l.noKeywords,
                         key: const ValueKey('no keywords'),
-                        style: previewText(12, color: colors.secondary),
+                        style: AmalfiType.callout(color: colors.secondary),
                       ),
                     )
                   : ListView(
                       key: const ValueKey('keywords'),
+                      padding: const EdgeInsets.all(4),
                       children: [
                         for (final (i, w) in words.indexed)
                           GestureDetector(
                             key: ValueKey('keyword $i'),
+                            behavior: HitTestBehavior.opaque,
                             onTap: () => setState(() => _chosenKeyword = i),
-                            child: Container(
-                              height: 24,
-                              color: _chosenKeyword == i
-                                  ? PreviewColors.accent
-                                  : null,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
+                            child: DecoratedBox(
+                              decoration: ShapeDecoration(
+                                color: _chosenKeyword == i
+                                    ? colors.selection
+                                    : null,
+                                shape: AmalfiSmoothBorder(radius: 8),
                               ),
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                w,
-                                style: previewText(
-                                  12,
-                                  color: _chosenKeyword == i
-                                      ? const Color(0xFFFFFFFF)
-                                      : colors.text,
+                              child: SizedBox(
+                                height: 28,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      w,
+                                      style: AmalfiType.callout(
+                                        color: _chosenKeyword == i
+                                            ? colors.onAccent
+                                            : colors.text,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -420,24 +471,31 @@ class _InspectorState extends State<Inspector> {
           ),
           const SizedBox(height: 8),
           if (editable)
-            SilicaTextField(
+            AmalfiTextField(
               key: const ValueKey('keyword field'),
               controller: _keyword,
               placeholder: l.newKeyword,
+              size: AmalfiFieldSize.small,
+              width:
+                  PreviewMetrics.inspectorWidth -
+                  2 * PreviewMetrics.inspectorPadding,
+              semanticLabel: l.newKeyword,
               onSubmitted: (_) => _addKeyword(),
             ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Row(
+            spacing: 8,
             children: [
-              SilicaButton(
+              AmalfiPushButton(
                 key: const ValueKey('keyword add'),
                 label: '+',
+                size: AmalfiControlSize.small,
                 onPressed: editable ? _addKeyword : null,
               ),
-              const SizedBox(width: 4),
-              SilicaButton(
+              AmalfiPushButton(
                 key: const ValueKey('keyword remove'),
                 label: '−',
+                size: AmalfiControlSize.small,
                 onPressed:
                     editable &&
                         _chosenKeyword != null &&
@@ -484,35 +542,33 @@ class _InspectorState extends State<Inspector> {
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: previewText(
-          11,
-          color: bold ? colors.secondary : colors.text,
-          weight: bold ? FontWeight.w700 : FontWeight.w400,
-        ),
+        style: bold
+            ? AmalfiType.caption(color: colors.secondary)
+            : AmalfiType.caption(color: colors.text),
       ),
     );
     return ListView(
       key: const ValueKey('annotation table'),
-      padding: const EdgeInsets.all(10),
+      padding: _bodyPadding,
       children: [
         Row(
           children: [
-            cell(l.columnPage, 40, bold: true),
-            cell(l.columnType, 70, bold: true),
-            cell(l.columnAuthor, 60, bold: true),
-            cell(l.columnDate, 80, bold: true),
+            cell(l.columnPage, 36, bold: true),
+            cell(l.columnType, 64, bold: true),
+            cell(l.columnAuthor, 56, bold: true),
+            cell(l.columnDate, 72, bold: true),
           ],
         ),
         const SizedBox(height: 4),
         for (final (page, kind, author, date) in rows)
           SizedBox(
-            height: 22,
+            height: 24,
             child: Row(
               children: [
-                cell(page, 40),
-                cell(kind, 70),
-                cell(author, 60),
-                cell(date, 80),
+                cell(page, 36),
+                cell(kind, 64),
+                cell(author, 56),
+                cell(date, 72),
               ],
             ),
           ),

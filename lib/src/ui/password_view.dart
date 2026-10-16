@@ -1,6 +1,7 @@
 // A locked PDF (PREVIEW-02 › PDF features › Password): the password is asked inside the window,
-// in place of the pages. A lock glyph (58 × 45), a bold line saying the document is protected,
-// a smaller line asking for the password, and a secure field 242 × 24 with the focus. A wrong
+// in place of the pages (kit `Apps/Preview/Password`). A lock glyph (32), a bold line saying the
+// document is protected, a smaller line asking for the password, and a secure field (244 × 28)
+// with the focus. A wrong
 // password clears the field and changes the second line; there is no shake. The right one
 // unlocks the document at once.
 
@@ -71,44 +72,35 @@ class _PasswordViewState extends State<PasswordView> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox.fromSize(
+            PreviewSymbol(
+              'lock',
               size: PreviewMetrics.lockGlyph,
-              child: PreviewSymbol(
-                'lock',
-                size: PreviewMetrics.lockGlyph.height,
-                color: colors.secondary,
-                fallback: '🔒',
-              ),
+              color: colors.tertiary,
+              fallback: '🔒',
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Text(
               l.passwordProtected,
-              style: previewText(
-                13,
-                color: colors.text,
-                weight: FontWeight.w700,
-              ),
+              style: AmalfiType.headline(color: colors.text),
             ),
             const SizedBox(height: 4),
             Text(
               widget.wrong ? l.passwordInvalid : l.passwordEnter,
               key: const ValueKey('password message'),
-              style: previewText(11, color: colors.secondary),
+              style: AmalfiType.caption(color: colors.secondary),
             ),
             const SizedBox(height: 12),
-            SizedBox.fromSize(
-              size: PreviewMetrics.passwordField,
-              child: SilicaTextField(
-                key: const ValueKey('password field'),
-                controller: _text,
-                focusNode: _focus,
-                secure: true,
-                width: PreviewMetrics.passwordField.width,
-                placeholder: l.passwordPlaceholder,
-                onSubmitted: (text) {
-                  if (text.isNotEmpty) widget.onPassword(text);
-                },
-              ),
+            AmalfiSecureField(
+              key: const ValueKey('password field'),
+              controller: _text,
+              focusNode: _focus,
+              width: PreviewMetrics.passwordField,
+              placeholder: l.passwordPlaceholder,
+              semanticLabel: l.passwordPlaceholder,
+              errorText: widget.wrong ? l.passwordInvalid : null,
+              onSubmitted: (text) {
+                if (text.isNotEmpty) widget.onPassword(text);
+              },
             ),
           ],
         ),

@@ -1,5 +1,6 @@
-// The markup toolbar (PREVIEW-02 › Markup): a 36 pt strip under the toolbar, its items centred
-// in three groups with separators and a hairline under it, shown and hidden at once.
+// The markup toolbar (kit `Apps/Preview/Image Markup`: a 36 pt strip and a 1 pt separator under
+// the toolbar, its items centred in groups split by 1 × 20 separators, small (24 pt) glass
+// capsules; shown and hidden at once).
 //
 // For an image Preview can write: Shapes ▾ (a 110 × 218 popover: line, arrow, rectangle, rounded
 // rectangle, oval, speech bubble, star, polygon), Text, Adjust Size | Shape Style ▾ (120 × 417:
@@ -79,7 +80,7 @@ class MarkupBar extends StatelessWidget {
         _Tool(
           keyName: 'markup note',
           tooltip: l.note,
-          icon: 'message',
+          icon: 'message-ellipsis',
           fallback: '▤',
           enabled: c.canAnnotate,
           onTap: onNote,
@@ -127,6 +128,7 @@ class MarkupBar extends StatelessWidget {
           size: PreviewMetrics.shapeStylePopover,
           builder: (close) => _ShapeStyle(controller: c),
         ),
+        const _Separator(),
         _Popover(
           keyName: 'markup border colour',
           tooltip: l.borderColour,
@@ -156,6 +158,7 @@ class MarkupBar extends StatelessWidget {
             },
           ),
         ),
+        const _Separator(),
         _Popover(
           keyName: 'markup text style',
           tooltip: l.textStyle,
@@ -167,41 +170,47 @@ class MarkupBar extends StatelessWidget {
         ),
       ];
     }
-    return Container(
-      key: const ValueKey('markup bar'),
-      height: PreviewMetrics.markupBarHeight,
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: colors.sidebarLine, width: 0.5),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          key: const ValueKey('markup bar'),
+          height: PreviewMetrics.markupBarHeight,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: 8,
+            children: groups,
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          for (final g in groups)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: g,
-            ),
-        ],
-      ),
+        SizedBox(height: 1, child: ColoredBox(color: colors.sidebarLine)),
+      ],
     );
   }
 }
 
+/// A 1 × 20 separator between the groups of the strip.
 class _Separator extends StatelessWidget {
   const _Separator();
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => SizedBox(
     width: 1,
-    height: 18,
-    margin: const EdgeInsets.symmetric(horizontal: 8),
-    color: PreviewColors.of(context).sidebarLine,
+    height: 20,
+    child: ColoredBox(color: PreviewColors.of(context).sidebarLine),
   );
 }
 
-/// A markup button (30 × 22).
+/// A glyph in a small action segment's colour (through [IconTheme]).
+Widget _glyph(String name, String fallback, {double size = 14}) => Builder(
+  builder: (context) => PreviewSymbol(
+    name,
+    size: size,
+    color: IconTheme.of(context).color ?? const Color(0xFF000000),
+    fallback: fallback,
+  ),
+);
+
+/// A markup button: a small (24 pt) glass circle.
 class _Tool extends StatelessWidget {
   const _Tool({
     required this.keyName,
@@ -219,34 +228,22 @@ class _Tool extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = PreviewColors.of(context);
-    return SilicaTooltip(
-      message: tooltip,
-      child: GestureDetector(
-        key: ValueKey(keyName),
-        behavior: HitTestBehavior.opaque,
-        onTap: enabled ? onTap : null,
-        child: SizedBox(
-          width: 30,
-          height: 22,
-          child: Center(
-            child: PreviewSymbol(
-              icon,
-              size: 16,
-              color: enabled
-                  ? colors.text
-                  : colors.text.withValues(alpha: 0.35),
-              fallback: fallback,
-            ),
-          ),
-        ),
+  Widget build(BuildContext context) => AmalfiActionSegments(
+    key: ValueKey(keyName),
+    size: AmalfiControlSize.small,
+    onPressed: enabled ? (_) => onTap() : null,
+    segments: [
+      AmalfiSegment.icon(
+        _glyph(icon, fallback),
+        semanticLabel: tooltip,
+        tooltip: tooltip,
       ),
-    );
-  }
+    ],
+  );
 }
 
-/// A markup button with a chevron that opens a popover under it.
+/// A markup button with a chevron (a 48 × 24 capsule of two segments) that opens a popover
+/// under it.
 class _Popover extends StatefulWidget {
   const _Popover({
     required this.keyName,
@@ -267,7 +264,7 @@ class _Popover extends StatefulWidget {
   final String? icon;
   final String fallback;
 
-  /// A colour well (24 × 24) in place of the icon.
+  /// A colour swatch in place of the icon.
   final Color? swatch;
   final bool fillSwatch;
 
@@ -286,53 +283,35 @@ class _PopoverState extends State<_Popover> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = PreviewColors.of(context);
-    final fg = widget.enabled
-        ? colors.text
-        : colors.text.withValues(alpha: 0.35);
     final Widget face = widget.icon != null
-        ? PreviewSymbol(
-            widget.icon!,
-            size: 16,
-            color: fg,
-            fallback: widget.fallback,
-          )
-        : _Swatch(color: widget.swatch, size: 16, none: widget.fillSwatch);
-    return SilicaTooltip(
-      message: widget.tooltip,
-      child: Builder(
-        builder: (anchor) => GestureDetector(
-          key: ValueKey(widget.keyName),
-          behavior: HitTestBehavior.opaque,
-          onTap: !widget.enabled
-              ? null
-              : () {
-                  _handle?.close();
-                  _handle = showPopover(
-                    anchor,
-                    size: widget.size,
-                    key: ValueKey('${widget.keyName} popover'),
-                    builder: (context, handle) => widget.builder(handle.close),
-                  );
-                },
-          child: SizedBox(
-            width: widget.icon != null ? 40 : 44,
-            height: 24,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                face,
-                const SizedBox(width: 3),
-                PreviewSymbol(
-                  'chevron-down',
-                  size: 8,
-                  color: fg,
-                  fallback: '⌄',
-                ),
-              ],
-            ),
+        ? _glyph(widget.icon!, widget.fallback)
+        : _Swatch(color: widget.swatch, size: 14, none: widget.fillSwatch);
+    return Builder(
+      builder: (anchor) => AmalfiActionSegments(
+        key: ValueKey(widget.keyName),
+        size: AmalfiControlSize.small,
+        onPressed: !widget.enabled
+            ? null
+            : (_) {
+                _handle?.close();
+                _handle = showPopover(
+                  anchor,
+                  size: widget.size,
+                  key: ValueKey('${widget.keyName} popover'),
+                  builder: (context, handle) => widget.builder(handle.close),
+                );
+              },
+        segments: [
+          AmalfiSegment.icon(
+            face,
+            semanticLabel: widget.tooltip,
+            tooltip: widget.tooltip,
           ),
-        ),
+          AmalfiSegment.icon(
+            _glyph('chevron-down', '⌄', size: 12),
+            semanticLabel: widget.tooltip,
+          ),
+        ],
       ),
     );
   }
@@ -383,43 +362,40 @@ class ColourGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final grid = shadeGrid();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 20, 14, 14),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            for (final (i, color) in brightColours.indexed)
+              GestureDetector(
+                key: ValueKey('bright $i'),
+                onTap: () => onColour(color),
+                child: _Swatch(color: color, size: 15),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: GridView.count(
+            crossAxisCount: 12,
+            mainAxisSpacing: 2,
+            crossAxisSpacing: 2,
+            physics: const NeverScrollableScrollPhysics(),
             children: [
-              for (final (i, color) in brightColours.indexed)
-                GestureDetector(
-                  key: ValueKey('bright $i'),
-                  onTap: () => onColour(color),
-                  child: _Swatch(color: color, size: 15),
-                ),
+              for (final (i, color) in grid.indexed)
+                if (color == null && !none)
+                  const SizedBox.shrink()
+                else
+                  GestureDetector(
+                    key: ValueKey('shade $i'),
+                    onTap: () => onColour(color),
+                    child: _Swatch(color: color, size: 18),
+                  ),
             ],
           ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 12,
-              mainAxisSpacing: 2,
-              crossAxisSpacing: 2,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                for (final (i, color) in grid.indexed)
-                  if (color == null && !none)
-                    const SizedBox.shrink()
-                  else
-                    GestureDetector(
-                      key: ValueKey('shade $i'),
-                      onTap: () => onColour(color),
-                      child: _Swatch(color: color, size: 18),
-                    ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -442,24 +418,21 @@ class _ShapesGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = PreviewColors.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 22, 12, 12),
-      child: Wrap(
-        spacing: 14,
-        runSpacing: 14,
-        children: [
-          for (final kind in _kinds)
-            GestureDetector(
-              key: ValueKey('shape ${kind.name}'),
-              onTap: () => onShape(kind),
-              child: SizedBox(
-                width: 28,
-                height: 28,
-                child: CustomPaint(painter: ShapeGlyph(kind, colors.text)),
-              ),
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final kind in _kinds)
+          GestureDetector(
+            key: ValueKey('shape ${kind.name}'),
+            onTap: () => onShape(kind),
+            child: SizedBox(
+              width: 28,
+              height: 28,
+              child: CustomPaint(painter: ShapeGlyph(kind, colors.text)),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
@@ -519,13 +492,17 @@ class _ShapeStyleState extends State<_ShapeStyle> {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: SizedBox(
-        height: 26,
+        height: 24,
         child: Row(
           children: [
             SizedBox(
-              width: 18,
+              width: 20,
               child: checked
-                  ? Text('✓', style: previewText(12, color: colors.text))
+                  ? AmalfiGlyph(
+                      AmalfiGlyphs.checkmark,
+                      size: 12,
+                      color: colors.text,
+                    )
                   : null,
             ),
             Expanded(child: child),
@@ -533,50 +510,46 @@ class _ShapeStyleState extends State<_ShapeStyle> {
         ),
       ),
     );
-    Widget divider() => Container(
-      height: 1,
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      color: colors.sidebarLine,
+    Widget divider() => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: SizedBox(height: 1, child: ColoredBox(color: colors.sidebarLine)),
     );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 20, 12, 10),
-      child: Column(
-        children: [
-          for (final w in lineWidths)
-            row(
-              key: 'width $w',
-              checked: style.lineWidth == w,
-              onTap: () => change((s) => s.lineWidth = w),
-              child: Container(height: w.clamp(1, 10), color: colors.text),
-            ),
+    return Column(
+      children: [
+        for (final w in lineWidths)
           row(
-            key: 'dashed',
-            checked: style.dashed,
-            onTap: () => change((s) => s.dashed = !s.dashed),
-            child: Text(l.dashed, style: previewText(12, color: colors.text)),
+            key: 'width $w',
+            checked: style.lineWidth == w,
+            onTap: () => change((s) => s.lineWidth = w),
+            child: Container(height: w.clamp(1, 10), color: colors.text),
           ),
-          divider(),
-          for (final (ends, label) in [
-            (LineEnds.none, '—'),
-            (LineEnds.start, '←'),
-            (LineEnds.end, '→'),
-            (LineEnds.both, '↔'),
-          ])
-            row(
-              key: 'ends ${ends.name}',
-              checked: style.ends == ends,
-              onTap: () => change((s) => s.ends = ends),
-              child: Text(label, style: previewText(14, color: colors.text)),
-            ),
-          divider(),
+        row(
+          key: 'dashed',
+          checked: style.dashed,
+          onTap: () => change((s) => s.dashed = !s.dashed),
+          child: Text(l.dashed, style: AmalfiType.body(color: colors.text)),
+        ),
+        divider(),
+        for (final (ends, label) in [
+          (LineEnds.none, '—'),
+          (LineEnds.start, '←'),
+          (LineEnds.end, '→'),
+          (LineEnds.both, '↔'),
+        ])
           row(
-            key: 'shadow',
-            checked: style.shadow,
-            onTap: () => change((s) => s.shadow = !s.shadow),
-            child: Text(l.shadow, style: previewText(12, color: colors.text)),
+            key: 'ends ${ends.name}',
+            checked: style.ends == ends,
+            onTap: () => change((s) => s.ends = ends),
+            child: Text(label, style: AmalfiType.body(color: colors.text)),
           ),
-        ],
-      ),
+        divider(),
+        row(
+          key: 'shadow',
+          checked: style.shadow,
+          onTap: () => change((s) => s.shadow = !s.shadow),
+          child: Text(l.shadow, style: AmalfiType.body(color: colors.text)),
+        ),
+      ],
     );
   }
 }
@@ -601,101 +574,113 @@ class _TextStyleState extends State<_TextStyle> {
       setState(() {});
     }
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 22, 14, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(l.textColour, style: previewText(12, color: colors.text)),
-              const SizedBox(width: 8),
-              SilicaColorWell(
-                key: const ValueKey('text colour'),
-                color: style.textColor,
-                showsAlpha: false,
-                onChanged: (color) => change((s) => s.textColor = color),
-              ),
-              const Spacer(),
-              Text(
-                '${style.fontSize.round()} pt',
-                key: const ValueKey('text size'),
-                style: previewText(12, color: colors.text),
-              ),
-              const SizedBox(width: 4),
-              SilicaStepper(
-                key: const ValueKey('text size stepper'),
-                value: style.fontSize,
-                min: 6,
-                max: 288,
-                onChanged: (v) => change((s) => s.fontSize = v),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              SegmentedControl(
-                key: const ValueKey('text emphasis'),
-                mode: SegmentedMode.selectAny,
-                size: ControlSize.small,
-                segments: const [
-                  Segment(label: 'B'),
-                  Segment(label: 'I'),
-                  Segment(label: 'U'),
-                ],
-                selected: {
-                  if (style.bold) 0,
-                  if (style.italic) 1,
-                  if (style.underline) 2,
-                },
-                onChanged: (i) => change((s) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      spacing: 12,
+      children: [
+        Row(
+          spacing: 8,
+          children: [
+            Text(l.textColour, style: AmalfiType.body(color: colors.text)),
+            AmalfiColorWell(
+              key: const ValueKey('text colour'),
+              style: AmalfiColorWellStyle.minimal,
+              color: style.textColor,
+              semanticLabel: l.textColour,
+              onChanged: (color) => change((s) => s.textColor = color),
+            ),
+            const Spacer(),
+            Text(
+              '${style.fontSize.round()} pt',
+              key: const ValueKey('text size'),
+              style: AmalfiType.body(color: colors.text),
+            ),
+            AmalfiStepper(
+              key: const ValueKey('text size stepper'),
+              value: style.fontSize,
+              min: 6,
+              max: 288,
+              semanticLabel: l.textSize,
+              onChanged: (v) => change((s) => s.fontSize = v),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            AmalfiSegmentedControl(
+              key: const ValueKey('text emphasis'),
+              selection: AmalfiSegmentedSelection.any,
+              size: AmalfiControlSize.small,
+              segments: [
+                AmalfiSegment.icon(
+                  _glyph('text-bold', 'B', size: 12),
+                  semanticLabel: l.bold,
+                ),
+                AmalfiSegment.icon(
+                  _glyph('text-italic', 'I', size: 12),
+                  semanticLabel: l.italic,
+                ),
+                AmalfiSegment.icon(
+                  _glyph('text-underline', 'U', size: 12),
+                  semanticLabel: l.underline,
+                ),
+              ],
+              selected: {
+                if (style.bold) 0,
+                if (style.italic) 1,
+                if (style.underline) 2,
+              },
+              onChanged: (now) => change((s) {
+                final before = {
+                  if (s.bold) 0,
+                  if (s.italic) 1,
+                  if (s.underline) 2,
+                };
+                for (final i
+                    in before.union(now).difference(before.intersection(now))) {
                   if (i == 0) s.bold = !s.bold;
                   if (i == 1) s.italic = !s.italic;
                   if (i == 2) s.underline = !s.underline;
-                }),
-              ),
-              const Spacer(),
-              SegmentedControl(
-                key: const ValueKey('text alignment'),
-                size: ControlSize.small,
-                segments: [
-                  for (final (icon, fallback) in [
-                    ('text-align-left', '⇤'),
-                    ('text-align-center', '↔'),
-                    ('text-align-right', '⇥'),
-                    ('text-justify', '≡'),
-                  ])
-                    Segment(
-                      icon: (color) => PreviewSymbol(
-                        icon,
-                        size: 12,
-                        color: color,
-                        fallback: fallback,
-                      ),
-                    ),
-                ],
-                selected: {
-                  switch (style.align) {
-                    TextAlign.center => 1,
-                    TextAlign.right || TextAlign.end => 2,
-                    TextAlign.justify => 3,
-                    _ => 0,
-                  },
+                }
+              }),
+            ),
+            const Spacer(),
+            AmalfiSegmentedControl(
+              key: const ValueKey('text alignment'),
+              size: AmalfiControlSize.small,
+              segments: [
+                for (final (icon, fallback, label) in [
+                  ('text-align-left', '⇤', l.alignLeft),
+                  ('text-align-center', '↔', l.alignCenter),
+                  ('text-align-right', '⇥', l.alignRight),
+                  ('text-justify', '≡', l.alignJustify),
+                ])
+                  AmalfiSegment.icon(
+                    _glyph(icon, fallback, size: 12),
+                    semanticLabel: label,
+                  ),
+              ],
+              selected: {
+                switch (style.align) {
+                  TextAlign.center => 1,
+                  TextAlign.right || TextAlign.end => 2,
+                  TextAlign.justify => 3,
+                  _ => 0,
                 },
-                onChanged: (i) => change(
-                  (s) => s.align = const [
-                    TextAlign.left,
-                    TextAlign.center,
-                    TextAlign.right,
-                    TextAlign.justify,
-                  ][i],
-                ),
+              },
+              onChanged: (now) => change(
+                (s) => s.align = const [
+                  TextAlign.left,
+                  TextAlign.center,
+                  TextAlign.right,
+                  TextAlign.justify,
+                ][now.first],
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -1,10 +1,11 @@
 // Highlights and Notes in the sidebar (PREVIEW-01 › Sidebar, PREVIEW-02 › PDF features): a
-// 19 pt header, then one row per annotation in page order. A highlight row (127 pt) has its
+// header (kit `Sidebar Contents`'s measures), then one row per annotation in page order. A highlight row (80 pt) has its
 // page, its author on the right, a 3 pt bar of its colour and the marked text (three lines); a
 // note row (114 pt) has a yellow strip and the note's text. A click goes to the annotation and
 // chooses it.
 
 import 'package:flutter/widgets.dart';
+import 'package:silica_ui/silica_ui.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../model/viewer.dart';
@@ -45,44 +46,52 @@ class NotesSidebar extends StatelessWidget {
       child: Container(
         key: const ValueKey('notes sidebar'),
         width: c.sidebarWidth,
-        decoration: BoxDecoration(
-          color: colors.sidebar,
-          border: Border(right: BorderSide(color: colors.sidebarLine)),
-        ),
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (_) => true,
-          child: ListView.builder(
-            padding: EdgeInsets.only(top: top, bottom: 6),
-            itemCount: all.length + 1,
-            itemBuilder: (context, i) {
-              if (i == 0) {
-                return SizedBox(
-                  height: PreviewMetrics.notesHeader,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        l.highlightsAndNotes,
-                        style: previewText(
-                          11,
-                          color: colors.secondary,
-                          weight: FontWeight.w700,
+        color: colors.sidebar,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (_) => true,
+                child: ListView.builder(
+                  padding: EdgeInsets.only(top: top, bottom: 8),
+                  itemCount: all.length + 1,
+                  itemBuilder: (context, i) {
+                    if (i == 0) {
+                      return SizedBox(
+                        height: PreviewMetrics.notesHeader,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              l.highlightsAndNotes,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AmalfiType.headline(color: colors.text),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                );
-              }
-              final (page, a) = all[i - 1];
-              return _Row(
-                controller: c,
-                page: page,
-                annotation: a,
-                focused: active && c.sidebarFocused,
-              );
-            },
-          ),
+                      );
+                    }
+                    final (page, a) = all[i - 1];
+                    return _Row(
+                      controller: c,
+                      page: page,
+                      annotation: a,
+                      focused: active && c.sidebarFocused,
+                    );
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: PreviewMetrics.sidebarDivider,
+              child: ColoredBox(color: colors.sidebarLine),
+            ),
+          ],
         ),
       ),
     );
@@ -109,7 +118,7 @@ class _Row extends StatelessWidget {
     final a = annotation;
     final note = a.kind == PdfMarkupKind.note;
     final chosen = c.chosenAnnotation == (page, a.id);
-    final fg = chosen && focused ? const Color(0xFFFFFFFF) : null;
+    final fg = chosen && focused ? colors.onAccent : null;
     final layout = c.textOf(page);
     if (layout == null && !note) c.loadText(page).then((_) => c.changed());
     final text = note
@@ -124,15 +133,18 @@ class _Row extends StatelessWidget {
       },
       child: Container(
         height: note ? PreviewMetrics.noteRow : PreviewMetrics.highlightRow,
-        margin: const EdgeInsets.symmetric(
-          horizontal: PreviewMetrics.contentsSelectionInset,
+        margin: const EdgeInsets.fromLTRB(
+          PreviewMetrics.contentsSelectionInset,
+          0,
+          PreviewMetrics.contentsSelectionInset,
+          4,
         ),
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: chosen
               ? (focused ? colors.selection : colors.selectionInactive)
               : null,
-          borderRadius: BorderRadius.circular(PreviewMetrics.contentsRadius),
+          shape: AmalfiSmoothBorder(radius: PreviewMetrics.contentsRadius),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -142,11 +154,7 @@ class _Row extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l.pageNumber(page + 1),
-                    style: previewText(
-                      11,
-                      color: fg ?? colors.secondary,
-                      weight: FontWeight.w700,
-                    ),
+                    style: AmalfiType.headline(color: fg ?? colors.text),
                   ),
                 ),
                 Flexible(
@@ -154,7 +162,7 @@ class _Row extends StatelessWidget {
                     a.author,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: previewText(11, color: fg ?? colors.secondary),
+                    style: AmalfiType.caption(color: fg ?? colors.secondary),
                   ),
                 ),
               ],
@@ -165,7 +173,7 @@ class _Row extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
-                    width: note ? 8 : PreviewMetrics.noteBar,
+                    width: PreviewMetrics.noteBar,
                     color: Color(a.argb | 0xFF000000),
                   ),
                   const SizedBox(width: 6),
@@ -174,7 +182,7 @@ class _Row extends StatelessWidget {
                       text,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: previewText(11, color: fg ?? colors.text),
+                      style: AmalfiType.caption(color: fg ?? colors.text),
                     ),
                   ),
                 ],

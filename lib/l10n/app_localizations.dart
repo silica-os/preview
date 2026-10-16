@@ -1178,6 +1178,54 @@ abstract class AppLocalizations {
   /// **'Zoom'**
   String get zoomTooltip;
 
+  /// No description provided for @overflowTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get overflowTooltip;
+
+  /// No description provided for @textSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get textSize;
+
+  /// No description provided for @bold.
+  ///
+  /// In en, this message translates to:
+  /// **'Bold'**
+  String get bold;
+
+  /// No description provided for @italic.
+  ///
+  /// In en, this message translates to:
+  /// **'Italic'**
+  String get italic;
+
+  /// No description provided for @alignLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Align left'**
+  String get alignLeft;
+
+  /// No description provided for @alignCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Centre'**
+  String get alignCenter;
+
+  /// No description provided for @alignRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Align right'**
+  String get alignRight;
+
+  /// No description provided for @alignJustify.
+  ///
+  /// In en, this message translates to:
+  /// **'Justify'**
+  String get alignJustify;
+
   /// No description provided for @infoModified.
   ///
   /// In en, this message translates to:

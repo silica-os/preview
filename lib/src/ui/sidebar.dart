@@ -1,16 +1,17 @@
-// The sidebar (PREVIEW-01 › Sidebar, PREVIEW-02 › Search): 160 pt by default, resizable from
-// 160 to 400 by its edge, over the window's glass. It shows one of:
+// The sidebar (kit `Apps/Preview/Sidebar *`; behaviour from PREVIEW-01 › Sidebar, PREVIEW-02 ›
+// Search): 160 pt by default, resizable from 160 to 400 by its edge, on `Surface/Sidebar` with a
+// 1 pt separator. It shows one of:
 //
-// - thumbnails: 117 × 174 cells (a 105 pt page, its number under it) on a 184 pt pitch, growing
+// - thumbnails: cells 144 wide (a 104 pt page, its number under it) on a 184 pt pitch, growing
 //   with the sidebar; the current one on a rounded rectangle, the accent while the sidebar has
 //   the focus, muted otherwise. PDF pages can be dragged to a new place (the others make room).
-//   Several images: one section per file, the file's name under it.
-// - the table of contents: the document's name (19 pt), entries 40 pt high, 12 pt per level;
-//   the chosen entry on an inset rounded rectangle, accent with bold white text when focused.
-// - bookmarks: a 30 pt header, then a row of 85 pt per bookmarked page (its number and the first
-//   words of its text).
-// - while searching, the results: a row of 77 pt per page with matches (thumbnail, "Page N",
-//   the number of matches, the text around the first match).
+//   Several images: a 120 × 92 picture with the file's name under it.
+// - the table of contents: the document's name, entries on a 40 pt pitch, 12 pt per level; the
+//   chosen entry on an inset rounded rectangle, accent with white text when focused.
+// - bookmarks: a header, then a row per bookmarked page (its number and the first words of its
+//   text).
+// - while searching, the results (200 pt wide): a row of 72 pt per page with matches
+//   (thumbnail, "Page N", the number of matches, the text around the first match).
 
 import 'dart:math' as math;
 
@@ -45,7 +46,7 @@ class PreviewSidebar extends StatelessWidget {
   final ViewerController controller;
   final bool active;
 
-  /// The toolbar band above it: the first row starts below.
+  /// Space above the first row (the toolbar band when content scrolls under it).
   final double top;
 
   /// A secondary click on thumbnail `index` at a global position.
@@ -71,22 +72,31 @@ class PreviewSidebar extends StatelessWidget {
       child: Container(
         key: const ValueKey('sidebar'),
         width: sidebarWidthOf(c),
-        decoration: BoxDecoration(
-          color: colors.sidebar,
-          border: Border(
-            right: BorderSide(
-              color: colors.sidebarLine,
-              width: PreviewMetrics.sidebarDivider,
+        color: colors.sidebar,
+        child: Stack(
+          children: [
+            // The list's own scrolling does not move the toolbar's veil.
+            Positioned.fill(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (_) => true,
+                child: NotificationListener<ScrollMetricsNotification>(
+                  onNotification: (_) => true,
+                  child: _Focused(
+                    active: active && c.sidebarFocused,
+                    child: child,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-        // The list's own scrolling does not move the toolbar's veil.
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (_) => true,
-          child: NotificationListener<ScrollMetricsNotification>(
-            onNotification: (_) => true,
-            child: _Focused(active: active && c.sidebarFocused, child: child),
-          ),
+            // The 1 pt separator along the trailing edge, inside the width.
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: PreviewMetrics.sidebarDivider,
+              child: ColoredBox(color: colors.sidebarLine),
+            ),
+          ],
         ),
       ),
     );
@@ -111,24 +121,29 @@ Color _selectionFill(BuildContext context) {
   return _Focused.of(context) ? colors.selection : colors.selectionInactive;
 }
 
-/// A header row: a caption in the secondary colour.
+/// The colour of text on a row or cell: on the accent while the chosen one is focused.
+Color _onSelection(
+  BuildContext context, {
+  required bool chosen,
+  required Color normal,
+}) => chosen && _Focused.of(context)
+    ? PreviewColors.of(context).onAccent
+    : normal;
+
+/// A header block (`Headline`, 8 from the top): the name of the document or the list.
 Widget _header(BuildContext context, String text, double height) {
   final colors = PreviewColors.of(context);
   return SizedBox(
     height: height,
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: Align(
-        alignment: Alignment.centerLeft,
+        alignment: Alignment.topLeft,
         child: Text(
           text,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: previewText(
-            11,
-            color: colors.secondary,
-            weight: FontWeight.w700,
-          ),
+          style: AmalfiType.headline(color: colors.text),
         ),
       ),
     ),
@@ -181,11 +196,12 @@ class _Thumbnails extends StatelessWidget {
     final pages = c.pages;
     Widget list(BoxConstraints box) {
       final width = sidebarWidthOf(c);
-      final image = PreviewMetrics.thumbnailWidth(width);
+      final image = PreviewMetrics.thumbnailWidth(width, photo: !c.isPdf);
       final padding = EdgeInsets.only(
         top: top + PreviewMetrics.thumbnailGap,
         bottom: PreviewMetrics.thumbnailGap,
-        right: PreviewMetrics.sidebarScroller,
+        left: PreviewMetrics.thumbnailCellMargin,
+        right: PreviewMetrics.thumbnailCellMargin,
       );
       Widget cell(int i) => _ThumbnailCell(
         key: ValueKey('thumbnail $i'),
@@ -249,11 +265,8 @@ class _ThumbnailCell extends StatelessWidget {
     final chosen = c.isPdf
         ? c.spreadPages(c.current).contains(index)
         : index == c.current;
-    final focused = _Focused.of(context);
-    final labelStyle = previewText(
-      11,
-      color: chosen && focused ? const Color(0xFFFFFFFF) : colors.secondary,
-      weight: chosen ? FontWeight.w600 : FontWeight.w400,
+    final labelStyle = AmalfiType.caption(
+      color: _onSelection(context, chosen: chosen, normal: colors.secondary),
     );
     final box = Size(imageWidth, imageWidth * PreviewMetrics.thumbnailAspect);
     final Widget picture;
@@ -283,11 +296,7 @@ class _ThumbnailCell extends StatelessWidget {
           child: ShownImage(item: item, scale: scale),
         ),
       );
-      label = middleTruncate(
-        item.name,
-        labelStyle,
-        imageWidth + 2 * PreviewMetrics.thumbnailInset - 8,
-      );
+      label = middleTruncate(item.name, labelStyle, imageWidth + 24);
     }
     final bookmarked = c.isPdf && c.pdf!.pages[index].bookmarked;
     return GestureDetector(
@@ -301,21 +310,19 @@ class _ThumbnailCell extends StatelessWidget {
             },
       child: Padding(
         padding: const EdgeInsets.only(bottom: PreviewMetrics.thumbnailGap),
-        child: Center(
-          child: Container(
-            key: chosen ? const ValueKey('chosen thumbnail') : null,
-            width: imageWidth + 2 * PreviewMetrics.thumbnailInset,
-            padding: const EdgeInsets.only(top: PreviewMetrics.thumbnailInset),
-            decoration: BoxDecoration(
-              color: chosen ? _selectionFill(context) : null,
-              borderRadius: BorderRadius.circular(
-                PreviewMetrics.thumbnailRadius,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
+        child: Container(
+          key: chosen ? const ValueKey('chosen thumbnail') : null,
+          padding: const EdgeInsets.only(top: PreviewMetrics.thumbnailInset),
+          decoration: ShapeDecoration(
+            color: chosen ? _selectionFill(context) : null,
+            shape: AmalfiSmoothBorder(radius: PreviewMetrics.thumbnailRadius),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Stack(
                   clipBehavior: Clip.none,
                   children: [
                     picture,
@@ -327,20 +334,14 @@ class _ThumbnailCell extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: PreviewMetrics.thumbnailLabelGap),
-                SizedBox(
-                  height: PreviewMetrics.thumbnailLabel,
-                  child: Center(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.clip,
-                      style: labelStyle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: PreviewMetrics.thumbnailLabelGap),
+              SizedBox(
+                height: PreviewMetrics.thumbnailLabel,
+                child: Text(label, maxLines: 1, style: labelStyle),
+              ),
+              const SizedBox(height: PreviewMetrics.thumbnailLabelBottom),
+            ],
           ),
         ),
       ),
@@ -373,7 +374,11 @@ class _RibbonPainter extends CustomPainter {
       ..lineTo(size.width / 2, size.height * 0.72)
       ..lineTo(0, size.height)
       ..close();
-    canvas.drawPath(path, Paint()..color = const Color(0xFFE5483A));
+    // `Palette/Terracotta`.
+    canvas.drawPath(
+      path,
+      Paint()..color = AmalfiColors.light.paletteTerracotta,
+    );
   }
 
   @override
@@ -411,14 +416,10 @@ class _ContentsState extends State<_Contents> {
 
     walk(c.pdf?.handle.outline ?? const [], 0);
     final width = sidebarWidthOf(c);
-    final headerStyle = previewText(
-      11,
-      color: colors.secondary,
-      weight: FontWeight.w700,
-    );
+    final headerStyle = AmalfiType.headline(color: colors.text);
     return ListView.builder(
       key: const ValueKey('contents'),
-      padding: EdgeInsets.only(top: widget.top, bottom: 6),
+      padding: EdgeInsets.only(top: widget.top, bottom: 8),
       itemCount: rows.length + 1,
       itemBuilder: (context, i) {
         if (i == 0) {
@@ -434,7 +435,7 @@ class _ContentsState extends State<_Contents> {
         final chosen = item == _chosen;
         final focused = _Focused.of(context);
         final textColor = chosen && focused
-            ? const Color(0xFFFFFFFF)
+            ? colors.onAccent
             : (page == null ? colors.secondary : colors.text);
         return GestureDetector(
           key: ValueKey('contents ${i - 1}'),
@@ -445,66 +446,63 @@ class _ContentsState extends State<_Contents> {
           },
           child: SizedBox(
             height: PreviewMetrics.contentsRow,
-            child: Container(
-              margin: const EdgeInsets.symmetric(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
                 horizontal: PreviewMetrics.contentsSelectionInset,
+                vertical:
+                    (PreviewMetrics.contentsRow -
+                        PreviewMetrics.contentsCapsule) /
+                    2,
               ),
-              decoration: BoxDecoration(
-                color: chosen
-                    ? (focused ? colors.selection : colors.contentsInactive)
-                    : null,
-                borderRadius: BorderRadius.circular(
-                  PreviewMetrics.contentsRadius,
-                ),
-              ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width:
-                        PreviewMetrics.contentsDisclosure -
-                        PreviewMetrics.contentsSelectionInset +
-                        depth * PreviewMetrics.contentsIndent,
+              child: DecoratedBox(
+                decoration: ShapeDecoration(
+                  color: chosen
+                      ? (focused ? colors.selection : colors.contentsInactive)
+                      : null,
+                  shape: AmalfiSmoothBorder(
+                    radius: PreviewMetrics.contentsRadius,
                   ),
-                  SizedBox(
-                    width: 14,
-                    child: item.children.isEmpty
-                        ? null
-                        : GestureDetector(
-                            key: ValueKey('disclosure ${i - 1}'),
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => setState(
-                              () =>
-                                  opened ? _open.remove(item) : _open.add(item),
-                            ),
-                            child: Center(
-                              child: SizedBox(
-                                width: 9,
-                                height: 9,
-                                child: OutlineTriangle(
-                                  open: opened,
-                                  color: textColor,
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(width: 6 + depth * PreviewMetrics.contentsIndent),
+                    SizedBox(
+                      width: PreviewMetrics.contentsDisclosure,
+                      child: item.children.isEmpty
+                          ? null
+                          : GestureDetector(
+                              key: ValueKey('disclosure ${i - 1}'),
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => setState(
+                                () => opened
+                                    ? _open.remove(item)
+                                    : _open.add(item),
+                              ),
+                              child: Center(
+                                child: AmalfiGlyph(
+                                  opened
+                                      ? AmalfiGlyphs.chevronDown
+                                      : AmalfiGlyphs.chevronRight,
+                                  size: PreviewMetrics.contentsDisclosure,
+                                  color: chosen && focused
+                                      ? colors.onAccent
+                                      : colors.secondary,
                                 ),
                               ),
                             ),
-                          ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: previewText(
-                        12,
-                        color: textColor,
-                        weight: chosen && focused
-                            ? FontWeight.w700
-                            : FontWeight.w400,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AmalfiType.body(color: textColor),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
+                    const SizedBox(width: 8),
+                  ],
+                ),
               ),
             ),
           ),
@@ -530,7 +528,7 @@ class _Bookmarks extends StatelessWidget {
     final marks = c.bookmarks;
     return ListView.builder(
       key: const ValueKey('bookmarks'),
-      padding: EdgeInsets.only(top: top, bottom: 6),
+      padding: EdgeInsets.only(top: top, bottom: 8),
       itemCount: marks.length + 1,
       itemBuilder: (context, i) {
         if (i == 0) {
@@ -538,40 +536,45 @@ class _Bookmarks extends StatelessWidget {
         }
         final page = marks[i - 1];
         final chosen = c.current == page;
-        final focused = _Focused.of(context);
-        final fg = chosen && focused ? const Color(0xFFFFFFFF) : null;
+        final secondary = _onSelection(
+          context,
+          chosen: chosen,
+          normal: colors.secondary,
+        );
         return GestureDetector(
           key: ValueKey('bookmark $page'),
           behavior: HitTestBehavior.opaque,
           onTap: () => c.jumpTo(page),
           child: Container(
             height: PreviewMetrics.bookmarkRow,
-            margin: const EdgeInsets.symmetric(
-              horizontal: PreviewMetrics.contentsSelectionInset,
+            margin: const EdgeInsets.fromLTRB(
+              PreviewMetrics.contentsSelectionInset,
+              0,
+              PreviewMetrics.contentsSelectionInset,
+              4,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: chosen ? _selectionFill(context) : null,
-              borderRadius: BorderRadius.circular(
-                PreviewMetrics.contentsRadius,
-              ),
+              shape: AmalfiSmoothBorder(radius: PreviewMetrics.contentsRadius),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   l.pageNumber(page + 1),
-                  style: previewText(
-                    11,
-                    color: fg ?? colors.secondary,
-                    weight: FontWeight.w700,
+                  style: AmalfiType.headline(
+                    color: _onSelection(
+                      context,
+                      chosen: chosen,
+                      normal: colors.text,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
                 _PageExcerpt(
                   controller: c,
                   page: page,
-                  style: previewText(11, color: fg ?? colors.text),
+                  style: AmalfiType.caption(color: secondary),
                 ),
               ],
             ),
@@ -636,13 +639,16 @@ class _Results extends StatelessWidget {
     final pages = c.pages;
     Widget list() => ListView.builder(
       key: const ValueKey('results'),
-      padding: EdgeInsets.only(top: top, bottom: 6),
+      padding: EdgeInsets.only(top: top + 8, bottom: 8),
       itemCount: results.length,
       itemBuilder: (context, i) {
         final (page, count) = results[i];
         final chosen = page == currentPage;
-        final focused = _Focused.of(context);
-        final fg = chosen && focused ? const Color(0xFFFFFFFF) : null;
+        final secondary = _onSelection(
+          context,
+          chosen: chosen,
+          normal: colors.secondary,
+        );
         final match = c.matches.firstWhere((m) => m.page == page);
         final layout = c.textOf(page);
         return GestureDetector(
@@ -651,15 +657,19 @@ class _Results extends StatelessWidget {
           onTap: () => c.showResult(page),
           child: Container(
             height: PreviewMetrics.resultRow,
-            margin: const EdgeInsets.symmetric(horizontal: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            decoration: BoxDecoration(
+            margin: const EdgeInsets.fromLTRB(
+              PreviewMetrics.contentsSelectionInset,
+              0,
+              PreviewMetrics.contentsSelectionInset,
+              PreviewMetrics.resultGap,
+            ),
+            padding: const EdgeInsets.all(8),
+            decoration: ShapeDecoration(
               color: chosen ? _selectionFill(context) : null,
-              borderRadius: BorderRadius.circular(
-                PreviewMetrics.contentsRadius,
-              ),
+              shape: AmalfiSmoothBorder(radius: PreviewMetrics.contentsRadius),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox.fromSize(
                   size: PreviewMetrics.resultThumbnail,
@@ -674,41 +684,33 @@ class _Results extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              l.pageNumber(page + 1),
-                              maxLines: 1,
-                              style: previewText(
-                                11,
-                                color: fg ?? colors.text,
-                                weight: FontWeight.w700,
-                              ),
-                            ),
+                      Text(
+                        l.pageNumber(page + 1),
+                        maxLines: 1,
+                        style: AmalfiType.headline(
+                          color: _onSelection(
+                            context,
+                            chosen: chosen,
+                            normal: colors.text,
                           ),
-                          Text(
-                            l.resultCount(count),
-                            style: previewText(
-                              10,
-                              color: fg ?? colors.secondary,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 2),
+                      Text(
+                        l.resultCount(count),
+                        maxLines: 1,
+                        style: AmalfiType.caption(color: secondary),
+                      ),
                       if (layout != null)
                         Text.rich(
                           _snippet(
                             layout,
                             match.start,
                             match.end,
-                            previewText(10, color: fg ?? colors.secondary),
+                            AmalfiType.caption(color: secondary),
                           ),
-                          maxLines: 3,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                     ],

@@ -612,6 +612,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get zoomTooltip => 'Zoom';
 
   @override
+  String get overflowTooltip => 'More';
+
+  @override
+  String get textSize => 'Text size';
+
+  @override
+  String get bold => 'Bold';
+
+  @override
+  String get italic => 'Italic';
+
+  @override
+  String get alignLeft => 'Align left';
+
+  @override
+  String get alignCenter => 'Centre';
+
+  @override
+  String get alignRight => 'Align right';
+
+  @override
+  String get alignJustify => 'Justify';
+
+  @override
   String get infoModified => 'Modified';
 
   @override
