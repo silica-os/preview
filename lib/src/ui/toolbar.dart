@@ -430,10 +430,10 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
       title: widget.title,
       subtitle: widget.subtitle,
       active: widget.active,
-      fill: open,
     );
+    // The piece is as wide as its text (up to the room there is), at the leading side.
     final placed = open
-        ? Padding(padding: const EdgeInsets.only(left: 8), child: block)
+        ? Align(alignment: AlignmentDirectional.centerStart, child: block)
         : block;
     if (popover == null) return placed;
     return Builder(

@@ -1015,6 +1015,16 @@ class PreviewWindowState extends State<PreviewWindow>
         markupShown: _markupShown,
       ),
     );
+    final strips = [
+      if (_findBar && c.searching) FindBar(controller: c, onDone: _closeSearch),
+      if (_markupShown && c.document != null)
+        MarkupBar(
+          controller: c,
+          onAddShape: _addShape,
+          onAdjustSize: () => unawaited(_adjustSize()),
+          onNote: () => unawaited(_addNote()),
+        ),
+    ];
     final body = Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1041,35 +1051,35 @@ class PreviewWindowState extends State<PreviewWindow>
               ),
             ),
           ),
+        // The find bar and the markup strip belong to the content's column (the sidebar and
+        // the inspector run beside them, up to the toolbar).
         Expanded(
-          child: Stack(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Positioned.fill(
-                child: ZoomInset(top: top, child: _content(colors, l)),
-              ),
-              if (shown == 1)
-                Positioned(
-                  left: 0,
-                  top: top,
-                  bottom: 0,
-                  child: SidebarResizer(controller: c),
+              ...strips,
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: ZoomInset(top: top, child: _content(colors, l)),
+                    ),
+                    if (shown == 1)
+                      Positioned(
+                        left: 0,
+                        top: top,
+                        bottom: 0,
+                        child: SidebarResizer(controller: c),
+                      ),
+                  ],
                 ),
+              ),
             ],
           ),
         ),
         if (c.inspector && c.document != null) Inspector(controller: c),
       ],
     );
-    final strips = [
-      if (_findBar && c.searching) FindBar(controller: c, onDone: _closeSearch),
-      if (_markupShown && c.document != null)
-        MarkupBar(
-          controller: c,
-          onAddShape: _addShape,
-          onAdjustSize: () => unawaited(_adjustSize()),
-          onNote: () => unawaited(_addNote()),
-        ),
-    ];
     return SilicaMenuBar(
       // The keys are handled by `_onKey` (⌘ and Ctrl, several keys per command): the bar shows them.
       shortcuts: false,
@@ -1089,7 +1099,6 @@ class PreviewWindowState extends State<PreviewWindow>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_toolbarShown) toolbar,
-                    ...strips,
                     Expanded(child: body),
                   ],
                 ),

@@ -663,7 +663,7 @@ class _Results extends StatelessWidget {
               PreviewMetrics.contentsSelectionInset,
               PreviewMetrics.resultGap,
             ),
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
             decoration: ShapeDecoration(
               color: chosen ? _selectionFill(context) : null,
               shape: AmalfiSmoothBorder(radius: PreviewMetrics.contentsRadius),

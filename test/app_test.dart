@@ -237,7 +237,7 @@ void main() {
     // Pieces: the window buttons' slot of 96, the view piece (a 64 × 32 capsule, 4 pt of
     // padding, 10 from the top), the title block from x 168.
     expect(at('view menu button'), const Rect.fromLTWH(100, 10, 64, 32));
-    expect(tester.getTopLeft(find.byType(AmalfiTitlePiece)).dx, 168 + 8);
+    expect(tester.getTopLeft(find.byType(AmalfiTitlePiece)).dx, 168);
     // The zoom group is three segments, the highlight group two.
     expect(at('zoom').size, const Size(96, 32));
     expect(at('highlight').size, const Size(64, 32));

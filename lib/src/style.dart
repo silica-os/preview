@@ -86,7 +86,7 @@ abstract final class PreviewMetrics {
   static const double thumbnailCellMargin = 8;
 
   /// The tallest thumbnail for its width (an A4 portrait page fills it).
-  static const double thumbnailAspect = 1.42;
+  static const double thumbnailAspect = 148 / 104;
 
   /// Several files in one window: one section per file.
   static const double sectionGap = 8;
@@ -97,9 +97,9 @@ abstract final class PreviewMetrics {
       (width - sidebarWidth) * thumbnailGrowth;
 
   /// Table of contents (kit `Sidebar Contents`): the document's name (Headline) 8 from the top,
-  /// entries on a 40 pt pitch from 36, the chosen one on a 32 pt capsule inset 8 (radius 8),
+  /// entries on a 40 pt pitch (the first row from 32), the chosen one on a 32 pt capsule inset 8 (radius 8),
   /// the disclosure (12) at 6 from the capsule and the title 10 after it, 12 per level.
-  static const double contentsHeader = 36;
+  static const double contentsHeader = 32;
   static const double contentsRow = 40;
   static const double contentsCapsule = 32;
   static const double contentsIndent = 12;
