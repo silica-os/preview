@@ -314,8 +314,17 @@ class PreviewWindowState extends State<PreviewWindow>
     try {
       if (item != null) {
         await widget.exporter(item, options, path);
-      } else {
-        await c.writePdfTo(path, security: options.security);
+      } else if (pdf != null) {
+        if (options.format == ExportFormat.pdf) {
+          await c.writePdfTo(path, security: options.security);
+        } else if (pdf.pageCount > 0) {
+          final bytes = await encodePdfPage(
+            pdf.handle,
+            pdf.pages[c.current.clamp(0, pdf.pageCount - 1)],
+            options,
+          );
+          await writeAtomically(path, bytes);
+        }
       }
     } on Object catch (e) {
       if (!mounted) return;

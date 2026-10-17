@@ -15,6 +15,7 @@ import 'package:image/image.dart' as img;
 import '../images/decode.dart';
 import '../images/formats.dart';
 import '../model/document.dart';
+import '../pdf/backend.dart';
 import 'pdf_writer.dart';
 
 /// The formats of the export sheet, in its order.
@@ -60,10 +61,22 @@ Encoding? ownEncoding(FileFormat format) => switch (format) {
 /// The export settings: the format, the quality (JPEG, 0–1, 0.85 by default) and whether the
 /// alpha channel is kept (PNG; off puts the image on white).
 class ExportOptions {
-  const ExportOptions(this.format, {this.quality = 0.85, this.alpha = true});
+  const ExportOptions(
+    this.format, {
+    this.quality = 0.85,
+    this.alpha = true,
+    this.ppi = defaultPpi,
+  });
   final ExportFormat format;
   final double quality;
   final bool alpha;
+
+  /// The resolution of a PDF page exported as an image, in pixels per inch.
+  final int ppi;
+
+  /// The resolutions of the export sheet's pop-up.
+  static const ppis = [72, 150, 300];
+  static const defaultPpi = 150;
 
   /// The name of the exported file next to the original's stem.
   String fileName(String path) => '${stemName(path)}.${format.extension}';
@@ -239,6 +252,62 @@ Future<void> exportImage(
     alpha: options.alpha,
   );
   await writeAtomically(path, bytes);
+}
+
+/// A PDF page as a PNG or JPEG: rendered by the backend at `options.ppi`, turned by the
+/// quarter turns the user added.
+Future<Uint8List> encodePdfPage(
+  PdfDocumentHandle handle,
+  PdfPage page,
+  ExportOptions options,
+) async {
+  final scale = options.ppi / 72;
+  final source = page.source;
+  final PdfPageBitmap bitmap;
+  if (source == null) {
+    final w = math.max(1, (page.size.width * scale).ceil());
+    final h = math.max(1, (page.size.height * scale).ceil());
+    bitmap = PdfPageBitmap(
+      w,
+      h,
+      Uint8List(w * h * 4)..fillRange(0, w * h * 4, 255),
+    );
+  } else {
+    bitmap = await handle.render(source, scale);
+  }
+  final turns = page.quarterTurns % 4;
+  final encoding = options.format.encoding;
+  final quality = (options.quality * 100).round().clamp(1, 100);
+  return Isolate.run(() {
+    final bgra = bitmap.bgra;
+    final rgba = Uint8List(bgra.length);
+    for (var i = 0; i + 3 < bgra.length; i += 4) {
+      rgba[i] = bgra[i + 2];
+      rgba[i + 1] = bgra[i + 1];
+      rgba[i + 2] = bgra[i];
+      rgba[i + 3] = 255;
+    }
+    if (turns == 0) {
+      return encodePixels(rgba, bitmap.width, bitmap.height, encoding, quality);
+    }
+    final image = img.copyRotate(
+      img.Image.fromBytes(
+        width: bitmap.width,
+        height: bitmap.height,
+        bytes: rgba.buffer,
+        numChannels: 4,
+        order: img.ChannelOrder.rgba,
+      ),
+      angle: 90.0 * turns,
+    );
+    return encodePixels(
+      image.getBytes(order: img.ChannelOrder.rgba),
+      image.width,
+      image.height,
+      encoding,
+      quality,
+    );
+  });
 }
 
 /// Writes `bytes` to a temporary file next to `path`, then puts it in its place.

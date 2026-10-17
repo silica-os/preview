@@ -1454,6 +1454,12 @@ abstract class AppLocalizations {
   /// **'Again'**
   String get verify;
 
+  /// No description provided for @ppiValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} ppi'**
+  String ppiValue(int value);
+
   /// No description provided for @pixelsPerInch.
   ///
   /// In en, this message translates to:

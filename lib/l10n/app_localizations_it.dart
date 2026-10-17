@@ -757,6 +757,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get verify => 'Ripeti';
 
   @override
+  String ppiValue(int value) {
+    return '$value ppi';
+  }
+
+  @override
   String get pixelsPerInch => 'pixel/pollice';
 
   @override

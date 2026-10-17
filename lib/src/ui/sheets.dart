@@ -28,7 +28,13 @@ import 'sheet.dart';
 
 /// The chosen export, with the permissions of an exported PDF.
 class ExportChoice extends ExportOptions {
-  const ExportChoice(super.format, {super.quality, super.alpha, this.security});
+  const ExportChoice(
+    super.format, {
+    super.quality,
+    super.alpha,
+    super.ppi,
+    this.security,
+  });
   final PdfSecurity? security;
 }
 
@@ -112,17 +118,20 @@ class _ExportSheet extends StatefulWidget {
 
 class _ExportSheetState extends State<_ExportSheet> {
   late ExportFormat _format = widget.pdfOnly
-      ? ExportFormat.pdf
+      ? (widget.initial.format == ExportFormat.tiff
+            ? ExportFormat.pdf
+            : widget.initial.format)
       : widget.initial.format;
   late double _quality = widget.initial.quality;
   late bool _alpha = widget.initial.alpha;
+  late int _ppi = widget.initial.ppi;
   PdfSecurity? _security;
   int? _size;
   Timer? _sizing;
   int _generation = 0;
 
   ExportOptions get _options =>
-      ExportOptions(_format, quality: _quality, alpha: _alpha);
+      ExportOptions(_format, quality: _quality, alpha: _alpha, ppi: _ppi);
 
   @override
   void initState() {
@@ -158,8 +167,11 @@ class _ExportSheetState extends State<_ExportSheet> {
     final l = AppLocalizations.of(context);
     final colors = AmalfiTheme.of(context).colors;
     final formats = widget.pdfOnly
-        ? const [ExportFormat.pdf]
+        ? const [ExportFormat.jpeg, ExportFormat.pdf, ExportFormat.png]
         : ExportFormat.values;
+    final pageImage =
+        widget.pdfOnly &&
+        (_format == ExportFormat.png || _format == ExportFormat.jpeg);
     return KeyedSubtree(
       key: const ValueKey('export sheet'),
       child: AmalfiDialog(
@@ -218,6 +230,21 @@ class _ExportSheetState extends State<_ExportSheet> {
                 ),
               ),
             ),
+          if (pageImage)
+            _row(
+              context,
+              l.resolution,
+              AmalfiPopUpButton<int>(
+                key: const ValueKey('export resolution'),
+                width: PreviewMetrics.exportWhere,
+                items: [
+                  for (final v in ExportOptions.ppis)
+                    AmalfiPopUpItem(value: v, label: l.ppiValue(v)),
+                ],
+                value: _ppi,
+                onChanged: (v) => _set(() => _ppi = v),
+              ),
+            ),
           if (_format == ExportFormat.png && widget.alpha)
             _row(
               context,
@@ -270,6 +297,7 @@ class _ExportSheetState extends State<_ExportSheet> {
                 _format,
                 quality: _quality,
                 alpha: _alpha,
+                ppi: _ppi,
                 security: _security,
               ),
             ),

@@ -388,6 +388,8 @@
   "permissionsButton": "Permissions…",
   "requirePassword": "Ask for a password to open the document",
   "verify": "Again",
+  "ppiValue": "{value} ppi",
+  "@ppiValue": {"placeholders": {"value": {"type": "int"}}},
   "pixelsPerInch": "pixels/inch",
   "resolution": "Resolution:",
   "scaleProportionally": "Keep proportions",

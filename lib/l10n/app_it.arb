@@ -226,6 +226,7 @@
   "permissionsButton": "Permessi…",
   "requirePassword": "Chiedi una password per aprire il documento",
   "verify": "Ripeti",
+  "ppiValue": "{value} ppi",
   "pixelsPerInch": "pixel/pollice",
   "resolution": "Risoluzione:",
   "scaleProportionally": "Mantieni le proporzioni",
