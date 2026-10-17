@@ -8,8 +8,9 @@
 // search field becomes a magnifier button and the tools that do not fit go into an overflow
 // button with a menu.
 //
-// Not shown in Preview: remove background (#19) and form filling (#15), share (no share
-// service in Silica, #1).
+// Share (the system share service, silica-desktop#217) follows the inspector and is drawn only
+// when the service has targets for the open file. Not shown in Preview: remove background (#19)
+// and form filling (#15).
 
 import 'dart:math' as math;
 
@@ -35,7 +36,12 @@ class ToolbarActions {
     this.highlighting = false,
     this.markup,
     this.markupShown = false,
+    this.share,
   });
+
+  /// Opens the Share menu under [anchor]'s button (null: the service has no targets for the
+  /// open file, so the button is not drawn).
+  final void Function(BuildContext anchor)? share;
 
   /// The entries of the view menu.
   final List<MenuEntry> Function() viewMenu;
@@ -94,6 +100,9 @@ class PreviewToolbar extends StatefulWidget {
 
 class _PreviewToolbarState extends State<PreviewToolbar> {
   OverlayEntry? _menu;
+
+  /// The overflow button, where the Share menu opens when Share sits in the overflow menu.
+  BuildContext? _overflowAnchor;
 
   @override
   void dispose() {
@@ -257,6 +266,31 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
           onSelected: c.toggleInspector,
         ),
       ),
+      if (a.share != null)
+        _Tool(
+          'share',
+          PreviewMetrics.buttonPiece,
+          () => Builder(
+            builder: (anchor) => _piece(
+              _button(
+                key: const ValueKey('share'),
+                name: 'share',
+                fallback: '⇪',
+                label: l.shareTooltip,
+                enabled: open,
+                onTap: () => a.share?.call(anchor),
+              ),
+            ),
+          ),
+          () => MenuAction(
+            l.shareTooltip,
+            enabled: open,
+            onSelected: () {
+              final anchor = _overflowAnchor;
+              if (anchor != null && anchor.mounted) a.share?.call(anchor);
+            },
+          ),
+        ),
     ];
   }
 
@@ -394,7 +428,7 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
                           fallback: '»',
                           label: l.overflowTooltip,
                           enabled: true,
-                          onTap: () => _openMenu(anchor, [
+                          onTap: () => _openMenu(_overflowAnchor = anchor, [
                             for (final t in hidden) t.menu(),
                           ], const ValueKey('overflow menu')),
                         ),

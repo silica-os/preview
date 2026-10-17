@@ -1160,6 +1160,18 @@ abstract class AppLocalizations {
   /// **'Markup'**
   String get markupTooltip;
 
+  /// Tooltip, accessibility label and overflow item of the Share button.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareTooltip;
+
+  /// Share menu item that copies the file to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get shareCopy;
+
   /// No description provided for @inspectorTooltip.
   ///
   /// In en, this message translates to:

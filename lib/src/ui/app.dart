@@ -13,6 +13,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:silica_ui/silica_ui.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../args.dart';
 import '../export/export.dart';
 import '../model/document.dart';
 import '../model/viewer.dart';
@@ -65,6 +66,10 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
   );
   late List<String> _files = widget.files;
 
+  /// The window's controller: files of a later launch (Open With while Preview runs) replace
+  /// what it shows.
+  ViewerController? _current;
+
   static bool _isActive(AppLifecycleState? s) =>
       s == null || s == AppLifecycleState.resumed;
 
@@ -73,8 +78,32 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _lifecycle;
+    SilicaApp.onOpen = _onOpen;
     // Dates in the inspector, in every language.
     unawaited(initializeDateFormatting());
+  }
+
+  /// Files of a second launch. The embedder has one window per app, so the document shown is
+  /// replaced (edits are saved first, as closing the window does). With no window yet (the
+  /// reopen is still building it) they open in the next one.
+  void _onOpen(List<String> args) {
+    final files = filesFromArgs(args);
+    if (files.isEmpty) return;
+    final controller = _current;
+    if (controller == null || controller.disposed) {
+      _files = files;
+      return;
+    }
+    unawaited(_openIn(controller, files));
+  }
+
+  Future<void> _openIn(ViewerController controller, List<String> files) async {
+    try {
+      if (controller.edited) await controller.save();
+    } on Object {
+      // The file stays as it was.
+    }
+    if (!controller.disposed) await controller.open(files);
   }
 
   @override
@@ -86,6 +115,7 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    SilicaApp.onOpen = null;
     _lifecycle.dispose();
     super.dispose();
   }
@@ -119,7 +149,10 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
                             loader: widget.loader,
                             dialogs: widget.dialogs,
                             files: files,
-                            onController: widget.onController,
+                            onController: (controller) {
+                              _current = controller;
+                              widget.onController?.call(controller);
+                            },
                             exporter: widget.exporter,
                             screenSize: widget.screenSize,
                           );

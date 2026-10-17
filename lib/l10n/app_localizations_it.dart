@@ -605,6 +605,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get markupTooltip => 'Annotazioni';
 
   @override
+  String get shareTooltip => 'Condividi';
+
+  @override
+  String get shareCopy => 'Copia';
+
+  @override
   String get inspectorTooltip => 'Informazioni';
 
   @override

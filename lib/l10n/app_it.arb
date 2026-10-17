@@ -177,6 +177,8 @@
   "strikethroughText": "Barra il testo",
   "highlightTooltip": "Evidenzia",
   "markupTooltip": "Annotazioni",
+  "shareTooltip": "Condividi",
+  "shareCopy": "Copia",
   "inspectorTooltip": "Informazioni",
   "viewMenuTooltip": "Vista",
   "zoomTooltip": "Zoom",

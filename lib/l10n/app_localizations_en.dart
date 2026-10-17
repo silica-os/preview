@@ -603,6 +603,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markupTooltip => 'Markup';
 
   @override
+  String get shareTooltip => 'Share';
+
+  @override
+  String get shareCopy => 'Copy';
+
+  @override
   String get inspectorTooltip => 'Inspector';
 
   @override

@@ -121,6 +121,10 @@ class PreviewWindowState extends State<PreviewWindow>
   bool _slideshow = false;
   bool _findBar = false;
 
+  /// The Share button: the files the service was asked about, and whether it has targets.
+  String _shareFor = '';
+  bool _shareable = false;
+
   /// The sidebar's presence: 0 hidden … 1 shown.
   late final AnimationController _sidebar = AnimationController(
     vsync: this,
@@ -1024,8 +1028,50 @@ class PreviewWindowState extends State<PreviewWindow>
     );
   }
 
+  List<Uri> _shareUris() => [for (final f in c.files) Uri.file(f)];
+
+  /// Asks the share service about the open files when they change; the button is drawn only
+  /// when there are targets.
+  void _refreshShare() {
+    final files = _shareUris();
+    final key = files.join('\n');
+    if (key == _shareFor) return;
+    _shareFor = key;
+    _shareable = false;
+    if (files.isEmpty) return;
+    unawaited(() async {
+      final targets = await SilicaShare.targets(files);
+      if (!mounted || key != _shareFor || targets.isEmpty) return;
+      setState(() => _shareable = true);
+    }());
+  }
+
+  /// Opens the Share menu under the button. Unsaved edits are saved first, as closing does,
+  /// so that what is shared is what is shown.
+  Future<void> _openShare(BuildContext anchor) async {
+    final box = anchor.findRenderObject();
+    if (box is! RenderBox || !box.attached) return;
+    final at = box.localToGlobal(Offset(0, box.size.height + 4));
+    final l = AppLocalizations.of(context);
+    try {
+      if (c.edited) await c.save();
+    } on Object {
+      // The file stays as it was; the saved version is shared.
+    }
+    final files = _shareUris();
+    if (!mounted || files.isEmpty) return;
+    await showSilicaShareMenu(
+      context: context,
+      position: at,
+      files: files,
+      copyLabel: l.shareCopy,
+    );
+    if (mounted) _focus.requestFocus();
+  }
+
   @override
   Widget build(BuildContext context) {
+    _refreshShare();
     final l = AppLocalizations.of(context);
     final colors = PreviewColors.of(context);
     final locked = c.passwordFor;
@@ -1055,6 +1101,7 @@ class PreviewWindowState extends State<PreviewWindow>
         highlighting: c.highlighting,
         markup: c.document == null ? null : _toggleMarkup,
         markupShown: _markupShown,
+        share: _shareable ? _openShare : null,
       ),
     );
     final strips = [

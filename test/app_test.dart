@@ -900,4 +900,86 @@ void main() {
       );
     });
   });
+
+  group('share and open while running', () {
+    const channel = MethodChannel('silica/dbus', JSONMethodCodec());
+    late List<Map> calls;
+
+    void service({required bool present}) {
+      calls = [];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            final args = call.arguments as Map;
+            calls.add(args);
+            if (!present) throw MissingPluginException();
+            return args['method'] == 'Targets'
+                ? [
+                    '[{"id":"copy","name":"Copy","icon":""},'
+                        '{"id":"dev.frascella.Mail","name":"Mail","icon":""}]',
+                  ]
+                : [true];
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null),
+      );
+    }
+
+    Future<void> flush(WidgetTester tester) async {
+      for (var i = 0; i < 3; i++) {
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+      }
+      await tester.pump();
+    }
+
+    testWidgets('Share appears with targets and sends the open file', (
+      tester,
+    ) async {
+      service(present: true);
+      final c = await pump(tester);
+      expect(find.byKey(const ValueKey('share')), findsNothing);
+      final path = png('a.png', 40, 30);
+      await openFiles(tester, c, [path]);
+      await flush(tester);
+      expect(find.byKey(const ValueKey('share')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('share')));
+      await flush(tester);
+      await tester.tap(find.text('Mail'));
+      await flush(tester);
+      final share = calls.lastWhere((a) => a['method'] == 'Share');
+      expect(share['args'], [
+        'dev.frascella.Mail',
+        ['file://$path'],
+      ]);
+    });
+
+    testWidgets('without the share service there is no Share button', (
+      tester,
+    ) async {
+      service(present: false);
+      final c = await pump(tester);
+      await openFiles(tester, c, [png('a.png', 40, 30)]);
+      await flush(tester);
+      expect(calls, isNotEmpty);
+      expect(find.byKey(const ValueKey('share')), findsNothing);
+    });
+
+    testWidgets('files of a second launch replace the document shown', (
+      tester,
+    ) async {
+      service(present: false);
+      final c = await pump(tester);
+      final first = png('first.png', 40, 30);
+      final second = png('second.png', 50, 20);
+      await openFiles(tester, c, [first]);
+      expect(c.files, [first]);
+      expect(SilicaApp.onOpen, isNotNull);
+      SilicaApp.onOpen!(['--flag', 'file://$second']);
+      await settle(tester, () => c.files.isNotEmpty && c.files.first == second);
+      expect(c.files, [second]);
+    });
+  });
 }

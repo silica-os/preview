@@ -141,6 +141,18 @@ class ViewerController extends ChangeNotifier {
   /// How many images or pages.
   int get count => document?.count ?? 0;
 
+  /// Whether the controller was disposed (its window is gone).
+  bool get disposed => _disposed;
+
+  /// The files of the document shown, in the order they were opened (for sharing).
+  List<String> get files => switch (document) {
+    ImageDocument(:final opened) => [
+      for (final path in {for (final i in opened) i.path}) path,
+    ],
+    PdfDocument(:final pdf) => [pdf.path],
+    null => const [],
+  };
+
   /// Several files in the window.
   bool get several => (images?.images.length ?? 0) > 1;
 
