@@ -881,10 +881,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortNone => 'As Opened';
 
   @override
-  String get sortRank => 'Matches';
+  String get sortRank => 'Relevance';
 
   @override
-  String get sortPage => 'Page';
+  String get sortPage => 'Page Order';
 
   @override
   String get unitPixels => 'pixels';

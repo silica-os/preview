@@ -1,6 +1,6 @@
 // The find bar (kit `Apps/Preview/PDF Search`: 36 pt and a 1 pt separator under the toolbar while
-// a search is shown): "Sort by" with two choices (by number of matches, by page), "Found on N
-// pages", previous and next, and Done, which ends the search.
+// a search is shown): the order capsule with two icon choices (`number`: page order, `sort`:
+// relevance), "Found on N pages", previous and next, and Done, which ends the search.
 
 import 'package:flutter/widgets.dart';
 import 'package:silica_ui/silica_ui.dart';
@@ -42,21 +42,25 @@ class FindBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                Text(
-                  l.sortBy,
-                  style: AmalfiType.caption(color: colors.secondary),
-                ),
-                const SizedBox(width: 8),
                 AmalfiSegmentedControl(
                   key: const ValueKey('search order'),
                   size: AmalfiControlSize.small,
                   segments: [
-                    AmalfiSegment.text(l.sortRank),
-                    AmalfiSegment.text(l.sortPage),
+                    AmalfiSegment.icon(
+                      icon('number', '#'),
+                      semanticLabel: l.sortPage,
+                      tooltip: l.sortPage,
+                    ),
+                    AmalfiSegment.icon(
+                      icon('sort', '≡'),
+                      semanticLabel: l.sortRank,
+                      tooltip: l.sortRank,
+                    ),
                   ],
-                  selected: {c.searchOrder.index},
-                  onChanged: (s) =>
-                      c.setSearchOrder(SearchOrder.values[s.first]),
+                  selected: {c.searchOrder == SearchOrder.page ? 0 : 1},
+                  onChanged: (s) => c.setSearchOrder(
+                    s.first == 0 ? SearchOrder.page : SearchOrder.rank,
+                  ),
                 ),
                 const Spacer(),
                 Text(

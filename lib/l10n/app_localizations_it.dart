@@ -885,10 +885,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get sortNone => 'Ordine di apertura';
 
   @override
-  String get sortRank => 'Risultati';
+  String get sortRank => 'Rilevanza';
 
   @override
-  String get sortPage => 'Pagina';
+  String get sortPage => 'Ordine di pagina';
 
   @override
   String get unitPixels => 'pixel';

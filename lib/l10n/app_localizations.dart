@@ -1685,13 +1685,13 @@ abstract class AppLocalizations {
   /// No description provided for @sortRank.
   ///
   /// In en, this message translates to:
-  /// **'Matches'**
+  /// **'Relevance'**
   String get sortRank;
 
   /// No description provided for @sortPage.
   ///
   /// In en, this message translates to:
-  /// **'Page'**
+  /// **'Page Order'**
   String get sortPage;
 
   /// No description provided for @unitPixels.
