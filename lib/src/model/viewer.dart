@@ -14,6 +14,7 @@ import 'dart:io';
 import '../export/export.dart' show saveImage;
 import '../images/formats.dart';
 import '../pdf/backend.dart';
+import '../recent.dart';
 import '../pdf/pages.dart';
 import '../pdf/qpdf.dart';
 import '../pdf/text.dart';
@@ -184,8 +185,12 @@ class ViewerController extends ChangeNotifier {
     }
     if (pdfPath != null) {
       await openPdf(pdfPath);
+      if (pdf != null) RecentFiles.add(pdfPath);
     } else if (images.isNotEmpty) {
       _show(ImageDocument(images));
+      for (final path in {for (final i in images) i.path}.toList().reversed) {
+        RecentFiles.add(path);
+      }
       // Several images: the thumbnails are how to move between them.
       sidebar = images.length > 1 ? SidebarMode.thumbnails : SidebarMode.none;
     }

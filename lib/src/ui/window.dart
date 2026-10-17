@@ -22,6 +22,7 @@ import '../model/window_size.dart';
 import '../pdf/backend.dart';
 import '../pdf/qpdf.dart';
 import '../portal.dart';
+import '../recent.dart';
 import '../style.dart';
 import 'contact_sheet.dart';
 import 'find_bar.dart';
@@ -279,6 +280,13 @@ class PreviewWindowState extends State<PreviewWindow>
     }
   }
 
+  Future<void> _openRecent(String path) async {
+    if (c.edited) await _save();
+    if (!mounted) return;
+    _sized = null;
+    await c.open([path]);
+  }
+
   /// File › Export…: the options sheet, then the portal's Save dialog.
   Future<void> export({ExportFormat? format}) async {
     final l = AppLocalizations.of(context);
@@ -533,6 +541,8 @@ class PreviewWindowState extends State<PreviewWindow>
         c,
         WindowActions(
           open: () => unawaited(open()),
+          openRecent: (path) => unawaited(_openRecent(path)),
+          clearRecent: () => setState(RecentFiles.clear),
           close: () {
             if (widget.onClose != null) {
               widget.onClose!();

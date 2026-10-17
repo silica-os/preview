@@ -924,6 +924,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get openRecent => 'Apri recenti';
 
   @override
+  String get clearMenu => 'Cancella menu';
+
+  @override
   String get duplicate => 'Duplica';
 
   @override

@@ -920,6 +920,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openRecent => 'Open Recent';
 
   @override
+  String get clearMenu => 'Clear Menu';
+
+  @override
   String get duplicate => 'Duplicate';
 
   @override

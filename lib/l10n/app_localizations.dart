@@ -1760,6 +1760,12 @@ abstract class AppLocalizations {
   /// **'Open Recent'**
   String get openRecent;
 
+  /// No description provided for @clearMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Menu'**
+  String get clearMenu;
+
   /// No description provided for @duplicate.
   ///
   /// In en, this message translates to:

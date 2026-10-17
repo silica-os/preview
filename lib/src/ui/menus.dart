@@ -4,13 +4,17 @@
 // context menu, which ends with each menu as a submenu. Items that do not apply are disabled,
 // never dead: what Preview cannot do is not listed at all.
 
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:silica_ui/silica_ui.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../model/document.dart' show baseName;
 import '../model/markup.dart';
 import '../model/viewer.dart';
+import '../recent.dart';
 import '../pdf/backend.dart';
 
 /// A key combination: ⌘ is the Super (Meta) key or Ctrl, as in the other Silica apps; ⌃⌘
@@ -82,6 +86,8 @@ class AppMenu {
 class WindowActions {
   const WindowActions({
     required this.open,
+    required this.openRecent,
+    required this.clearRecent,
     required this.close,
     required this.save,
     required this.rename,
@@ -105,6 +111,10 @@ class WindowActions {
     required this.canWritePdf,
   });
   final VoidCallback open;
+
+  /// Opens a file of the Open Recent menu, and empties that menu.
+  final void Function(String path) openRecent;
+  final VoidCallback clearRecent;
   final VoidCallback close;
   final VoidCallback save;
   final VoidCallback rename;
@@ -193,7 +203,26 @@ List<AppMenu> previewMenus(
         keys: const [Keys(LogicalKeyboardKey.keyO)],
         run: a.open,
       ),
-      if (u) off('open_recent', l.openRecent, submenu: const []),
+      Command(
+        'preview.open_recent',
+        l.openRecent,
+        submenu: [
+          for (final path in RecentFiles.paths)
+            if (File(path).existsSync())
+              Command(
+                'preview.recent.$path',
+                baseName(path),
+                run: () => a.openRecent(path),
+              ),
+          if (RecentFiles.paths.isNotEmpty) null,
+          Command(
+            'preview.clear_recent',
+            l.clearMenu,
+            enabled: RecentFiles.paths.isNotEmpty,
+            run: a.clearRecent,
+          ),
+        ],
+      ),
       null,
       Command(
         'preview.close',
