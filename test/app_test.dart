@@ -944,8 +944,10 @@ void main() {
             if (!present) throw MissingPluginException();
             return args['method'] == 'Targets'
                 ? [
-                    '[{"id":"copy","name":"Copy","icon":""},'
-                        '{"id":"dev.frascella.Mail","name":"Mail","icon":""}]',
+                    [
+                      ['copy', 'Copy', ''],
+                      ['dev.frascella.Mail', 'Mail', ''],
+                    ],
                   ]
                 : [true];
           });
