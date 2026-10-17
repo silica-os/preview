@@ -140,24 +140,24 @@ void main() {
     c.open([pdf('Lemon recipes.pdf', 12)]);
     await settle(tester, () => c.document != null);
     expect(key(tester, 'toolbar'), const Rect.fromLTWH(0, 0, 1040, 52));
-    // Piece View [96,0 72×52]: its capsule at [4,10 64×32] (two 32 segments).
+    // Piece View [96,0 81×52]: its capsule at [4,8 73×36] (two 36 segments and a separator).
     expect(
       key(tester, 'view menu button'),
-      const Rect.fromLTWH(100, 10, 64, 32),
+      const Rect.fromLTWH(100, 8, 73, 36),
     );
-    // Right side, from the window's right edge less 16: Search piece 208 (field 200 × 32),
-    // Inspector, Markup, Rotate 40 (a 32 circle), Highlight 72 (64), Zoom 104 (96).
-    expect(key(tester, 'search field'), const Rect.fromLTWH(820, 10, 200, 32));
+    // Right side, from the window's right edge less 8: Search piece 208 (field 200 × 36),
+    // Inspector, Markup, Rotate 44 (a 36 circle), Highlight 81 (73), Zoom 118 (110).
+    expect(key(tester, 'search field'), const Rect.fromLTWH(828, 8, 200, 36));
     expect(
       key(tester, 'inspector button'),
-      const Rect.fromLTWH(780, 10, 32, 32),
+      const Rect.fromLTWH(784, 8, 36, 36),
     );
-    expect(key(tester, 'markup'), const Rect.fromLTWH(740, 10, 32, 32));
-    expect(key(tester, 'rotate'), const Rect.fromLTWH(700, 10, 32, 32));
-    expect(key(tester, 'highlight'), const Rect.fromLTWH(628, 10, 64, 32));
-    expect(key(tester, 'zoom'), const Rect.fromLTWH(524, 10, 96, 32));
+    expect(key(tester, 'markup'), const Rect.fromLTWH(740, 8, 36, 36));
+    expect(key(tester, 'rotate'), const Rect.fromLTWH(696, 8, 36, 36));
+    expect(key(tester, 'highlight'), const Rect.fromLTWH(615, 8, 73, 36));
+    expect(key(tester, 'zoom'), const Rect.fromLTWH(497, 8, 110, 36));
     // `Piece/Title + Subtitle` [168,0 …×52]: it starts where the view piece ends.
-    expect(tester.getTopLeft(find.byType(AmalfiTitlePiece)).dx, 168);
+    expect(tester.getTopLeft(find.byType(AmalfiTitlePiece)).dx, 177);
   });
 
   testWidgets('Toolbar Image: no highlight, the view piece for one image', (
@@ -171,7 +171,7 @@ void main() {
     );
     // `Piece/Preview Highlight Off`: the capsule is there, disabled.
     expect(highlight.onPressed, isNull);
-    expect(key(tester, 'highlight').size, const Size(64, 32));
+    expect(key(tester, 'highlight').size, const Size(73, 36));
   });
 
   testWidgets('PDF Thumbnails: 160 wide, cells 144 on a 184 pitch', (

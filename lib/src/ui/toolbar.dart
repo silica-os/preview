@@ -125,7 +125,7 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
     overlay.insert(_menu!);
   }
 
-  Widget _icon(String name, String fallback, {double size = 16}) => Builder(
+  Widget _icon(String name, String fallback, {double size = 20}) => Builder(
     builder: (context) => PreviewSymbol(
       name,
       size: size,
@@ -137,7 +137,7 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
   /// A piece holding one control: 4 pt on each side.
   Widget _piece(Widget child) => AmalfiToolbarPiece(child: child);
 
-  /// A one-segment capsule (a 32 pt circle), `chosen` when its function is on.
+  /// A one-segment capsule (a 36 pt circle), `chosen` when its function is on.
   Widget _button({
     required Key key,
     required String name,
@@ -188,7 +188,7 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
                     tooltip: l.highlightTooltip,
                   ),
                   AmalfiSegment.icon(
-                    _icon('chevron-down', '⌄', size: 12),
+                    _icon('chevron-down', '⌄'),
                     semanticLabel: l.highlightTooltip,
                   ),
                 ],
@@ -316,13 +316,16 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
                           ? PreviewMetrics.buttonPiece
                           : PreviewMetrics.searchPiece)
                     : 0) +
-                AmalfiToolbarMetrics.unifiedPadding.right;
+                PreviewMetrics.toolbarTrailing;
             if (open && need() > width) collapsed = true;
             while (open && need() > width && shown.isNotEmpty) {
               hidden.insert(0, shown.removeLast());
             }
             return AmalfiToolbar(
               active: widget.active,
+              padding: const EdgeInsets.only(
+                right: PreviewMetrics.toolbarTrailing,
+              ),
               children: [
                 // Ossido draws the window buttons here, at x 18 (measured).
                 const SizedBox(width: _controlsWidth),
@@ -343,7 +346,7 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
                             tooltip: l.viewMenuTooltip,
                           ),
                           AmalfiSegment.icon(
-                            _icon('chevron-down', '⌄', size: 12),
+                            _icon('chevron-down', '⌄'),
                             semanticLabel: l.viewMenuTooltip,
                             tooltip: l.viewMenuTooltip,
                           ),

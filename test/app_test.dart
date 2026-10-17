@@ -234,18 +234,18 @@ void main() {
     final c = await pump(tester, size: const Size(1200, 800));
     await openFiles(tester, c, [pdf('book.pdf', book(3))]);
     Rect at(String key) => tester.getRect(find.byKey(ValueKey(key)));
-    // Pieces: the window buttons' slot of 96, the view piece (a 64 × 32 capsule, 4 pt of
-    // padding, 10 from the top), the title block from x 168.
-    expect(at('view menu button'), const Rect.fromLTWH(100, 10, 64, 32));
-    expect(tester.getTopLeft(find.byType(AmalfiTitlePiece)).dx, 168);
+    // Pieces: the window buttons' slot of 96, the view piece (a 73 × 36 capsule, 4 pt of
+    // padding, 8 from the top), the title block from x 177.
+    expect(at('view menu button'), const Rect.fromLTWH(100, 8, 73, 36));
+    expect(tester.getTopLeft(find.byType(AmalfiTitlePiece)).dx, 177);
     // The zoom group is three segments, the highlight group two.
-    expect(at('zoom').size, const Size(96, 32));
-    expect(at('highlight').size, const Size(64, 32));
-    // The search field (200) ends 4 pt of padding and the bar's 16 pt from the right edge.
+    expect(at('zoom').size, const Size(110, 36));
+    expect(at('highlight').size, const Size(73, 36));
+    // The search field (200) ends 4 pt of padding and the bar's 8 pt from the right edge.
     final search = at('search field');
-    expect(search.right, closeTo(1200 - 16 - 4, 0.5));
+    expect(search.right, closeTo(1200 - 8 - 4, 0.5));
     expect(search.width, 200);
-    expect(search.height, 32);
+    expect(search.height, 36);
   });
 
   testWidgets('a narrow window: the search circle and the overflow menu', (

@@ -847,7 +847,7 @@ class PreviewWindowState extends State<PreviewWindow>
     final l = AppLocalizations.of(context);
     return AmalfiSearchField(
       key: const ValueKey('search field'),
-      size: AmalfiFieldSize.large,
+      size: AmalfiFieldSize.toolbar,
       width: PreviewMetrics.searchPiece - 8,
       placeholder: l.searchPlaceholder,
       clearLabel: l.searchClear,

@@ -38,13 +38,16 @@ abstract final class PreviewMetrics {
 
   // --- Toolbar (kit `Apps/Preview/Toolbar *`; the pieces' widths with 4 pt of padding) --------
 
-  /// The view piece (two 32 pt segments), the zoom piece (three), the highlight piece (two) and
+  /// The view piece (two 36 pt segments), the zoom piece (three), the highlight piece (two) and
   /// a one-button piece, and the search piece (a 200 pt field).
-  static const double viewPiece = 72;
-  static const double zoomPiece = 104;
-  static const double highlightPiece = 72;
-  static const double buttonPiece = 40;
+  static const double viewPiece = 81;
+  static const double zoomPiece = 118;
+  static const double highlightPiece = 81;
+  static const double buttonPiece = 44;
   static const double searchPiece = 208;
+
+  /// The bar ends 8 pt after the last piece (kit `Toolbar PDF`: Search 824 + 208 of 1040).
+  static const double toolbarTrailing = 8;
 
   /// The title's narrowest width before items move into the overflow menu. *Provisional.*
   static const double titleMinWidth = 80;
