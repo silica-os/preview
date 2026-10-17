@@ -1125,6 +1125,15 @@ class PreviewWindowState extends State<PreviewWindow>
                           width: AmalfiAlertMetrics.width,
                           child: AmalfiAlert(
                             key: const ValueKey('alert'),
+                            icon: Image.asset(
+                              'icon/icon.png',
+                              width: 56,
+                              height: 56,
+                              cacheWidth: 112,
+                              filterQuality: FilterQuality.medium,
+                              errorBuilder: (_, _, _) =>
+                                  const SizedBox(width: 56, height: 56),
+                            ),
                             title: title,
                             message: message,
                             actions: [
