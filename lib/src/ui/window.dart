@@ -6,7 +6,7 @@
 // (model/viewer.dart); this file wires it to the user.
 
 import 'dart:async';
-import 'dart:io' show FileSystemException;
+import 'dart:io' show FileSystemException, Process, ProcessException;
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
@@ -280,6 +280,28 @@ class PreviewWindowState extends State<PreviewWindow>
     }
   }
 
+  /// Edit › Move to Trash: `gio trash` on the shown file, then the window closes.
+  Future<void> _trash() async {
+    final path = c.pdf?.path ?? c.image?.path;
+    if (path == null) return;
+    final l = AppLocalizations.of(context);
+    try {
+      final result = await Process.run('gio', ['trash', '--', path]);
+      if (result.exitCode != 0)
+        throw ProcessException('gio', ['trash'], '${result.stderr}'.trim());
+    } on Object catch (e) {
+      if (!mounted) return;
+      _say(l.trashFailed, '$e');
+      return;
+    }
+    if (!mounted) return;
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else {
+      unawaited(SilicaApp.closeWindow());
+    }
+  }
+
   Future<void> _openRecent(String path) async {
     if (c.edited) await _save();
     if (!mounted) return;
@@ -543,6 +565,7 @@ class PreviewWindowState extends State<PreviewWindow>
           open: () => unawaited(open()),
           openRecent: (path) => unawaited(_openRecent(path)),
           clearRecent: () => setState(RecentFiles.clear),
+          trash: () => unawaited(_trash()),
           close: () {
             if (widget.onClose != null) {
               widget.onClose!();

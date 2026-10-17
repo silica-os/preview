@@ -475,6 +475,7 @@
   "invertSelection": "Invert Selection",
   "pageFromFile": "Page from File…",
   "moveToTrash": "Move to Trash",
+  "trashFailed": "The file couldn't be moved to the Trash.",
   "jumpToSelection": "Jump to Selection",
   "zoomToSelection": "Zoom to Selection",
   "customizeToolbar": "Customize Toolbar…",

@@ -240,6 +240,7 @@
   "renameFailed": "Impossibile usare “{name}”: esiste già un file con questo nome, oppure la cartella non è scrivibile.",
   "resultCount": "{count, plural, =1{1 risultato} other{{count} risultati}}",
   "saveCommand": "Salva",
+  "trashFailed": "Impossibile spostare il file nel Cestino.",
   "saveFailed": "Impossibile salvare le modifiche.",
   "shadow": "Ombra",
   "shapes": "Forme",

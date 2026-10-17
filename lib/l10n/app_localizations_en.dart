@@ -950,6 +950,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moveToTrash => 'Move to Trash';
 
   @override
+  String get trashFailed => 'The file couldn\'t be moved to the Trash.';
+
+  @override
   String get jumpToSelection => 'Jump to Selection';
 
   @override

@@ -88,6 +88,7 @@ class WindowActions {
     required this.open,
     required this.openRecent,
     required this.clearRecent,
+    required this.trash,
     required this.close,
     required this.save,
     required this.rename,
@@ -115,6 +116,9 @@ class WindowActions {
   /// Opens a file of the Open Recent menu, and empties that menu.
   final void Function(String path) openRecent;
   final VoidCallback clearRecent;
+
+  /// Edit › Move to Trash: the open file goes to the Trash and the window closes.
+  final VoidCallback trash;
   final VoidCallback close;
   final VoidCallback save;
   final VoidCallback rename;
@@ -327,12 +331,14 @@ List<AppMenu> previewMenus(
         enabled: pdf,
         run: c.selectAll,
       ),
-      if (u)
-        off(
-          'invert_selection',
-          l.invertSelection,
-          keys: const Keys(LogicalKeyboardKey.keyI, shift: true),
-        ),
+      Command(
+        'preview.invert_selection',
+        l.invertSelection,
+        shortcut: '⇧⌘I',
+        keys: const [Keys(LogicalKeyboardKey.keyI, shift: true)],
+        enabled: pdf,
+        run: c.invertSelection,
+      ),
       if (pdf || u) ...[
         null,
         Command(
@@ -350,12 +356,14 @@ List<AppMenu> previewMenus(
           ],
         ),
       ],
-      if (u)
-        off(
-          'trash',
-          l.moveToTrash,
-          keys: const Keys(LogicalKeyboardKey.backspace),
-        ),
+      Command(
+        'preview.trash',
+        l.moveToTrash,
+        shortcut: '⌘⌫',
+        keys: const [Keys(LogicalKeyboardKey.backspace)],
+        enabled: open,
+        run: a.trash,
+      ),
       null,
       Command(
         'preview.find_menu',

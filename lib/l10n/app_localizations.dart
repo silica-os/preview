@@ -1820,6 +1820,12 @@ abstract class AppLocalizations {
   /// **'Move to Trash'**
   String get moveToTrash;
 
+  /// No description provided for @trashFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file couldn\'t be moved to the Trash.'**
+  String get trashFailed;
+
   /// No description provided for @jumpToSelection.
   ///
   /// In en, this message translates to:

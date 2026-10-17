@@ -1160,6 +1160,32 @@ class ViewerController extends ChangeNotifier {
     _notify();
   }
 
+  /// Edit › Invert Selection: what was selected is not, and the rest of the text is.
+  Future<void> invertSelection() async {
+    final item = pdf;
+    if (item == null) return;
+    final before = [...selection];
+    final inverted = <PageSelection>[];
+    for (var page = 0; page < item.pageCount; page++) {
+      final layout = await loadText(page);
+      if (_disposed || pdf != item) return;
+      final ranges = before.where((s) => s.page == page && !s.isEmpty).toList()
+        ..sort((a, b) => a.start.compareTo(b.start));
+      var from = 0;
+      for (final s in ranges) {
+        if (s.start > from) inverted.add(PageSelection(page, from, s.start));
+        from = math.max(from, s.end);
+      }
+      if (from < layout.length) {
+        inverted.add(PageSelection(page, from, layout.length));
+      }
+    }
+    selection
+      ..clear()
+      ..addAll(inverted);
+    _notify();
+  }
+
   /// The selected text, pages separated by a line break.
   String get selectedText => [
     for (final s in selection)

@@ -954,6 +954,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get moveToTrash => 'Sposta nel Cestino';
 
   @override
+  String get trashFailed => 'Impossibile spostare il file nel Cestino.';
+
+  @override
   String get jumpToSelection => 'Vai alla selezione';
 
   @override
