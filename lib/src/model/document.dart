@@ -42,7 +42,13 @@ class ImageItem {
     required this.colour,
     this.exif = const [],
     this.transparent = false,
+    this.page = 0,
+    this.pageCount = 1,
   });
+
+  /// The page of a multi-page file this item shows (0-based), and how many the file has.
+  final int page;
+  final int pageCount;
 
   /// Whether some pixels are not opaque (the export offers to keep the transparency).
   final bool transparent;
@@ -92,7 +98,9 @@ class ImageItem {
     FileFormat.tiff ||
     FileFormat.gif ||
     FileFormat.webp =>
-      content is RasterContent && (content as RasterContent).frames == 1,
+      pageCount == 1 &&
+          content is RasterContent &&
+          (content as RasterContent).frames == 1,
     _ => false,
   };
 
@@ -263,7 +271,10 @@ class DocumentLoader {
   }
 
   /// One image. Throws [OpenException].
-  Future<ImageItem> image(String path) async {
+  Future<ImageItem> image(String path) async => (await images(path)).first;
+
+  /// The images of a file: one, or a page each for a multi-page TIFF. Throws [OpenException].
+  Future<List<ImageItem>> images(String path) async {
     final (format, _) = await probe(path);
     if (!format.isImage) {
       throw OpenException(path, OpenFailure.unsupported, format.label);
@@ -274,9 +285,9 @@ class DocumentLoader {
     } on FileSystemException catch (e) {
       throw OpenException(path, OpenFailure.missing, e.message);
     }
-    final ImageContent content;
+    final List<ImageContent> contents;
     try {
-      content = await decodeImage(bytes, format);
+      contents = await decodePages(bytes, format);
     } on ImageLoadException catch (e) {
       throw OpenException(
         path,
@@ -287,6 +298,32 @@ class DocumentLoader {
       );
     }
     final fromHeader = colourInfo(bytes, format);
+    final exif = await readExif(bytes, format);
+    return [
+      for (final (i, content) in contents.indexed)
+        await _item(
+          path,
+          format,
+          content,
+          bytes.length,
+          fromHeader,
+          exif,
+          i,
+          contents.length,
+        ),
+    ];
+  }
+
+  Future<ImageItem> _item(
+    String path,
+    FileFormat format,
+    ImageContent content,
+    int fileSize,
+    ColourInfo fromHeader,
+    List<ExifField> exif,
+    int page,
+    int pageCount,
+  ) async {
     final colour = content is RasterContent && content.colour != null
         ? content.colour!
         : fromHeader;
@@ -294,10 +331,12 @@ class DocumentLoader {
       path: path,
       format: format,
       content: content,
-      fileSize: bytes.length,
+      fileSize: fileSize,
       colour: colour,
-      exif: await readExif(bytes, format),
+      exif: exif,
       transparent: colour.alpha && await detectTransparency(content),
+      page: page,
+      pageCount: pageCount,
     );
   }
 

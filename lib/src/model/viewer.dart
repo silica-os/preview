@@ -171,7 +171,7 @@ class ViewerController extends ChangeNotifier {
           );
           continue;
         }
-        images.add(await loader.image(path));
+        images.addAll(await loader.images(path));
       } on OpenException catch (e) {
         failures.add(e);
       }
@@ -1720,9 +1720,9 @@ class ViewerController extends ChangeNotifier {
     final keep = (current, zoomMode, _manualScale, sidebar, layout, inspector);
     if (images != null) {
       final items = <ImageItem>[];
-      for (final path in images) {
+      for (final path in {...images}) {
         try {
-          items.add(await loader.image(path));
+          items.addAll(await loader.images(path));
         } on OpenException catch (e) {
           failures.add(e);
         }

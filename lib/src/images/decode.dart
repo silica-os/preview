@@ -132,29 +132,56 @@ Future<ImageContent> _engine(Uint8List bytes) async {
   }
 }
 
-/// TIFF: decoded to RGBA in a background isolate (big scans take a while).
-Future<ImageContent> _tiff(Uint8List bytes) async {
+/// Every page of `bytes`: the frames of a multi-page TIFF, else the one image.
+Future<List<ImageContent>> decodePages(
+  Uint8List bytes,
+  FileFormat format,
+) async {
+  if (format != FileFormat.tiff) return [await decodeImage(bytes, format)];
+  return _tiffPages(bytes);
+}
+
+/// TIFF: the first page, decoded to RGBA in a background isolate.
+Future<ImageContent> _tiff(Uint8List bytes) async =>
+    (await _tiffPages(bytes)).first;
+
+/// TIFF: every page, decoded to RGBA in a background isolate (big scans take a while).
+Future<List<ImageContent>> _tiffPages(Uint8List bytes) async {
   final decoded = await Isolate.run(() {
-    final tiff = img.decodeTiff(bytes);
-    if (tiff == null) return null;
-    final channels = tiff.numChannels;
-    final depth = tiff.bitsPerChannel;
-    final rgba = tiff
-        .convert(format: img.Format.uint8, numChannels: 4, alpha: 255)
-        .getBytes(order: img.ChannelOrder.rgba);
-    return (tiff.width, tiff.height, rgba, channels, depth);
+    final decoder = img.TiffDecoder();
+    if (decoder.startDecode(bytes) == null) return null;
+    final out = <(int, int, Uint8List, int, int)>[];
+    for (var i = 0; i < decoder.numFrames(); i++) {
+      final tiff = decoder.decodeFrame(i);
+      if (tiff == null) break;
+      final rgba = tiff
+          .convert(format: img.Format.uint8, numChannels: 4, alpha: 255)
+          .getBytes(order: img.ChannelOrder.rgba);
+      out.add((
+        tiff.width,
+        tiff.height,
+        rgba,
+        tiff.numChannels,
+        tiff.bitsPerChannel,
+      ));
+    }
+    return out;
   });
-  if (decoded == null) {
+  if (decoded == null || decoded.isEmpty) {
     throw const ImageLoadException(ImageFailure.damaged, 'TIFF');
   }
-  final (width, height, rgba, channels, depth) = decoded;
-  final colour = switch (channels) {
-    1 => ColourInfo(ColourModel.gray, depth: depth),
-    2 => ColourInfo(ColourModel.gray, alpha: true, depth: depth),
-    3 => ColourInfo(ColourModel.rgb, depth: depth),
-    _ => ColourInfo(ColourModel.rgb, alpha: true, depth: depth),
-  };
-  return RasterContent(await rgbaImage(rgba, width, height), colour: colour);
+  return [
+    for (final (width, height, rgba, channels, depth) in decoded)
+      RasterContent(
+        await rgbaImage(rgba, width, height),
+        colour: switch (channels) {
+          1 => ColourInfo(ColourModel.gray, depth: depth),
+          2 => ColourInfo(ColourModel.gray, alpha: true, depth: depth),
+          3 => ColourInfo(ColourModel.rgb, depth: depth),
+          _ => ColourInfo(ColourModel.rgb, alpha: true, depth: depth),
+        },
+      ),
+  ];
 }
 
 /// An image from RGBA pixels.

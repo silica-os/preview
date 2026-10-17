@@ -296,7 +296,9 @@ class _ThumbnailCell extends StatelessWidget {
           child: ShownImage(item: item, scale: scale),
         ),
       );
-      label = middleTruncate(item.name, labelStyle, imageWidth + 24);
+      label = item.pageCount > 1
+          ? '${item.page + 1}'
+          : middleTruncate(item.name, labelStyle, imageWidth + 24);
     }
     final bookmarked = c.isPdf && c.pdf!.pages[index].bookmarked;
     return GestureDetector(
