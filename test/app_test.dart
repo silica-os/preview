@@ -769,11 +769,41 @@ void main() {
     await settle(tester, () => !c.edited && c.image!.quarterTurns == 0);
   });
 
+  testWidgets('a drag from the title moves the window', (tester) async {
+    final calls = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SilicaWindow.channel,
+      (call) async {
+        calls.add(call.method);
+        return true;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SilicaWindow.channel,
+        null,
+      ),
+    );
+    final c = await pump(tester);
+    await openFiles(tester, c, [png('photo.png', 20, 10)]);
+    calls.clear();
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('title block'))),
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveBy(const Offset(30, 0));
+    await gesture.up();
+    await tester.pump(const Duration(seconds: 1));
+    expect(calls, contains('startMove'));
+  });
+
   testWidgets('the title popover renames the file', (tester) async {
     final c = await pump(tester);
     final path = png('photo.png', 20, 10);
     await openFiles(tester, c, [path]);
     await tester.tap(find.byKey(const ValueKey('title block')));
+    // The bar's double-click recognizer holds the click for its timeout.
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
     expect(
       tester.getSize(find.byKey(const ValueKey('title popover'))).width,

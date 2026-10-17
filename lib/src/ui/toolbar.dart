@@ -474,11 +474,14 @@ class _PreviewToolbarState extends State<PreviewToolbar> {
         : block;
     if (popover == null) return placed;
     return Builder(
-      builder: (anchor) => GestureDetector(
-        key: const ValueKey('title block'),
-        behavior: HitTestBehavior.opaque,
-        onTap: () => popover(anchor),
-        child: placed,
+      // A click opens the popover; a drag from the title moves the window.
+      builder: (anchor) => WindowDragThrough(
+        child: GestureDetector(
+          key: const ValueKey('title block'),
+          behavior: HitTestBehavior.opaque,
+          onTap: () => popover(anchor),
+          child: placed,
+        ),
       ),
     );
   }
