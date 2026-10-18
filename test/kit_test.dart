@@ -23,11 +23,20 @@ import 'support/fake_pdf.dart';
 import 'support/samples.dart';
 
 class _Dialogs implements FileDialogs {
+  _Dialogs({this.unavailable = false});
+
+  /// No portal: the Open dialog cannot be shown.
+  final bool unavailable;
+
   @override
   Future<List<String>?> open({
     required String title,
     bool multiple = true,
-  }) async => null;
+  }) async {
+    if (unavailable) throw const FileDialogUnavailable('no portal');
+    return null;
+  }
+
   @override
   Future<String?> save({required String title, required String name}) async =>
       null;
@@ -44,9 +53,13 @@ void main() {
     controller = null;
   });
 
+  /// Preview launched with [files] (without a document only the Open panel shows, preview#24);
+  /// with [unavailable] the Open dialog cannot be shown and the window opens empty.
   Future<ViewerController> pump(
     WidgetTester tester, {
     Brightness brightness = Brightness.light,
+    List<String> files = const [],
+    bool unavailable = false,
   }) async {
     tester.view.physicalSize = const Size(1040, 680);
     tester.view.devicePixelRatio = 1;
@@ -56,7 +69,8 @@ void main() {
     await tester.pumpWidget(
       PreviewApp(
         loader: DocumentLoader(pdf: backend, writer: FakePdfWriter()),
-        dialogs: _Dialogs(),
+        dialogs: _Dialogs(unavailable: unavailable),
+        files: files,
         locale: const Locale('en'),
         onController: (c) => controller = c,
         screenSize: (_) async => const Size(2560, 1440),
@@ -136,8 +150,7 @@ void main() {
   testWidgets('Toolbar PDF: 52 tall, the pieces in order and in size', (
     tester,
   ) async {
-    final c = await pump(tester);
-    c.open([pdf('Lemon recipes.pdf', 12)]);
+    final c = await pump(tester, files: [pdf('Lemon recipes.pdf', 12)]);
     await settle(tester, () => c.document != null);
     expect(key(tester, 'toolbar'), const Rect.fromLTWH(0, 0, 1040, 52));
     // Piece View [96,0 81×52]: its capsule at [4,8 73×36] (two 36 segments and a separator).
@@ -163,8 +176,7 @@ void main() {
   testWidgets('Toolbar Image: no highlight, the view piece for one image', (
     tester,
   ) async {
-    final c = await pump(tester);
-    c.open([png('Positano.jpg.png')]);
+    final c = await pump(tester, files: [png('Positano.jpg.png')]);
     await settle(tester, () => c.document != null);
     final highlight = tester.widget<AmalfiActionSegments>(
       find.byKey(const ValueKey('highlight')),
@@ -177,8 +189,7 @@ void main() {
   testWidgets('PDF Thumbnails: 160 wide, cells 144 on a 184 pitch', (
     tester,
   ) async {
-    final c = await pump(tester);
-    c.open([pdf('Lemon recipes.pdf', 12)]);
+    final c = await pump(tester, files: [pdf('Lemon recipes.pdf', 12)]);
     await settle(tester, () => c.document != null);
     c.setSidebar(SidebarMode.thumbnails);
     c.goTo(1);
@@ -207,8 +218,10 @@ void main() {
   testWidgets('PDF Contents: the name, entries on a 40 pt pitch, 32 pt capsule', (
     tester,
   ) async {
-    final c = await pump(tester);
-    c.open([pdf('Lemon recipes.pdf', 12, outline: true)]);
+    final c = await pump(
+      tester,
+      files: [pdf('Lemon recipes.pdf', 12, outline: true)],
+    );
     await settle(tester, () => c.document != null);
     c.setSidebar(SidebarMode.contents);
     await tester.pump(const Duration(seconds: 1));
@@ -230,8 +243,7 @@ void main() {
   testWidgets(
     'PDF Search: 200 wide sidebar, rows of 72 on a 76 pitch, the find bar',
     (tester) async {
-      final c = await pump(tester);
-      c.open([pdf('Lemon recipes.pdf', 12)]);
+      final c = await pump(tester, files: [pdf('Lemon recipes.pdf', 12)]);
       await settle(tester, () => c.document != null);
       c.setSidebar(SidebarMode.thumbnails);
       await tester.tap(find.byKey(const ValueKey('search field')));
@@ -256,8 +268,7 @@ void main() {
   testWidgets('Inspector: 260 wide, four tabs, groups with rows of 36', (
     tester,
   ) async {
-    final c = await pump(tester);
-    c.open([png('Positano.jpg.png')]);
+    final c = await pump(tester, files: [png('Positano.jpg.png')]);
     await settle(tester, () => c.document != null);
     c.toggleInspector();
     await tester.pump(const Duration(seconds: 1));
@@ -273,8 +284,7 @@ void main() {
   testWidgets('Image Markup: the 36 pt strip with its 1 pt separator', (
     tester,
   ) async {
-    final c = await pump(tester);
-    c.open([png('Positano.jpg.png')]);
+    final c = await pump(tester, files: [png('Positano.jpg.png')]);
     await settle(tester, () => c.document != null);
     await tester.tap(find.byKey(const ValueKey('markup')));
     await tester.pump(const Duration(seconds: 1));
@@ -295,8 +305,7 @@ void main() {
   testWidgets(
     'Contact Sheet: header 28, cells 152 × 216 on a 164 × 232 pitch',
     (tester) async {
-      final c = await pump(tester);
-      c.open([pdf('Lemon recipes.pdf', 12)]);
+      final c = await pump(tester, files: [pdf('Lemon recipes.pdf', 12)]);
       await settle(tester, () => c.document != null);
       c.setSidebar(SidebarMode.contactSheet);
       c.goTo(1);
@@ -318,10 +327,9 @@ void main() {
   testWidgets('Locked PDF: the lock, the lines and a 244 × 28 secure field', (
     tester,
   ) async {
-    final c = await pump(tester);
     final path = write(dir, 'Locked.pdf', '%PDF-1.4\n'.codeUnits);
     backend.files[path] = FakePdf([const FakePage()], password: 'pw');
-    c.open([path]);
+    final c = await pump(tester, files: [path]);
     await settle(tester, () => c.passwordFor != null);
     expect(
       key(tester, 'password field').size,
@@ -334,7 +342,8 @@ void main() {
   testWidgets('Empty window: the prompt and a primary Open button', (
     tester,
   ) async {
-    await pump(tester);
+    // The window with no document: the Open dialog could not be shown.
+    await pump(tester, unavailable: true);
     final open = key(tester, 'empty open');
     expect(open.height, 28);
     expect(open.center.dx, closeTo(520, 1));
@@ -343,7 +352,11 @@ void main() {
 
   testWidgets('light and dark: the window is Surface/Window', (tester) async {
     for (final brightness in [Brightness.light, Brightness.dark]) {
-      await pump(tester, brightness: brightness);
+      await pump(
+        tester,
+        brightness: brightness,
+        files: [png('Positano.jpg.png')],
+      );
       final colors = AmalfiColors.of(brightness);
       final window = tester.widget<ColoredBox>(
         find

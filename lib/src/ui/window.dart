@@ -80,7 +80,6 @@ class PreviewWindow extends StatefulWidget {
     required this.controller,
     required this.dialogs,
     this.active = true,
-    this.onOpenCancelled,
     this.exporter = exportImage,
     this.screenSize = systemScreenSize,
     this.onClose,
@@ -92,10 +91,6 @@ class PreviewWindow extends StatefulWidget {
   final Exporter exporter;
   final FileDialogs dialogs;
   final bool active;
-
-  /// The Open dialog shown at launch or on a reopen was cancelled (the window goes away, as the
-  /// reference's Open panel leaves the app without windows).
-  final VoidCallback? onOpenCancelled;
 
   /// The screen's size, for the size of the window of a new document.
   final ScreenSize screenSize;
@@ -253,8 +248,8 @@ class PreviewWindowState extends State<PreviewWindow>
   void _say(String title, [String? message]) =>
       setState(() => _alert = (title, message, null));
 
-  /// File › Open…: the portal's Open dialog. `initial`: shown at launch or on a reopen.
-  Future<void> open({bool initial = false}) async {
+  /// File › Open…: the portal's Open dialog.
+  Future<void> open() async {
     final l = AppLocalizations.of(context);
     List<String>? paths;
     try {
@@ -265,10 +260,7 @@ class PreviewWindowState extends State<PreviewWindow>
       return;
     }
     if (!mounted) return;
-    if (paths == null || paths.isEmpty) {
-      if (initial && c.document == null) widget.onOpenCancelled?.call();
-      return;
-    }
+    if (paths == null || paths.isEmpty) return;
     // What was open is saved before it is replaced.
     if (c.edited) await _save();
     _sized = null;

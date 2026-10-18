@@ -7,6 +7,7 @@
 import 'dart:async';
 import 'dart:ui' show Locale, PlatformDispatcher;
 
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -83,6 +84,28 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
     unawaited(initializeDateFormatting());
   }
 
+  /// The Open dialog could not be shown: the window opens empty and says why.
+  bool _dialogUnavailable = false;
+
+  /// The Open panel alone, while there is no window (launch without a document, a reopen, File ›
+  /// Open… with no window): true when there is something to show.
+  Future<bool> _chooseDocument() async {
+    // Files of a second launch already waiting.
+    if (_files.isNotEmpty) return true;
+    final l = lookupAppLocalizations(_locale);
+    List<String>? paths;
+    try {
+      paths = await widget.dialogs.open(title: l.openDialogTitle);
+    } on FileDialogUnavailable {
+      // No portal (outside Silica): the empty window with its Open button and the reason.
+      _dialogUnavailable = true;
+      return true;
+    }
+    if (!mounted || paths == null || paths.isEmpty) return false;
+    _files = paths;
+    return true;
+  }
+
   /// Files of a second launch. The embedder has one window per app, so the document shown is
   /// replaced (edits are saved first, as closing the window does). With no window yet (the
   /// reopen is still building it) they open in the next one.
@@ -142,13 +165,22 @@ class _PreviewAppState extends State<PreviewApp> with WidgetsBindingObserver {
                   initialEntries: [
                     OverlayEntry(
                       builder: (context) => SilicaAppWindow(
+                        // A document app (APP-LC): without a document, at launch and at a
+                        // reopen, only the Open panel shows; no empty window (preview#24).
+                        startsWithDocument: widget.files.isNotEmpty,
+                        chooseDocument: _chooseDocument,
+                        windowlessBuilder: (context, open) =>
+                            _WindowlessMenus(onOpen: open),
                         builder: (context) {
                           final files = _files;
                           _files = const [];
+                          final unavailable = _dialogUnavailable;
+                          _dialogUnavailable = false;
                           return _Window(
                             loader: widget.loader,
                             dialogs: widget.dialogs,
                             files: files,
+                            dialogUnavailable: unavailable,
                             onController: (controller) {
                               _current = controller;
                               widget.onController?.call(controller);
@@ -190,6 +222,7 @@ class _Window extends StatefulWidget {
     required this.loader,
     required this.dialogs,
     required this.files,
+    this.dialogUnavailable = false,
     this.onController,
     this.exporter = exportImage,
     this.screenSize = systemScreenSize,
@@ -200,6 +233,9 @@ class _Window extends StatefulWidget {
   final Exporter exporter;
   final ScreenSize screenSize;
   final List<String> files;
+
+  /// The Open dialog could not be shown: the window says why.
+  final bool dialogUnavailable;
   final ValueChanged<ViewerController>? onController;
 
   @override
@@ -218,9 +254,10 @@ class _WindowState extends State<_Window> {
     widget.onController?.call(_controller);
     if (widget.files.isNotEmpty) {
       unawaited(_controller.open(widget.files));
-    } else {
+    } else if (widget.dialogUnavailable) {
+      // File › Open… says the dialog cannot be shown.
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => unawaited(_window.currentState?.open(initial: true)),
+        (_) => unawaited(_window.currentState?.open()),
       );
     }
   }
@@ -239,8 +276,38 @@ class _WindowState extends State<_Window> {
     controller: _controller,
     dialogs: widget.dialogs,
     active: _ActiveScope.of(context),
-    onOpenCancelled: () => unawaited(SilicaApp.closeWindow()),
     exporter: widget.exporter,
     screenSize: widget.screenSize,
   );
+}
+
+/// The menus Preview offers with no window (the app menu, File › Open…), as the reference does
+/// after its Open panel was cancelled.
+class _WindowlessMenus extends StatelessWidget {
+  const _WindowlessMenus({required this.onOpen});
+
+  final Future<void> Function() onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return SilicaWindowlessMenuBar(
+      menus: [
+        SilicaMenus.app(l.appName),
+        SilicaMenu(
+          label: l.menuFile,
+          menus: [
+            SilicaMenuItem(
+              label: l.open,
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.keyO,
+                meta: true,
+              ),
+              onSelected: () => unawaited(onOpen()),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }

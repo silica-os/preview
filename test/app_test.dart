@@ -65,11 +65,14 @@ void main() {
     controller = null;
   });
 
+  /// Preview launched with [files] (Open With). Without a document only the Open panel
+  /// would show, and no window (preview#24).
   Future<ViewerController> pump(
     WidgetTester tester, {
     Locale locale = const Locale('en'),
     Size size = const Size(1000, 700),
     Size? screen,
+    required List<String> files,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -78,6 +81,7 @@ void main() {
       PreviewApp(
         loader: DocumentLoader(pdf: backend, writer: writer),
         dialogs: dialogs,
+        files: files,
         locale: locale,
         onController: (c) => controller = c,
         exporter: (item, options, path) async =>
@@ -86,7 +90,16 @@ void main() {
       ),
     );
     await tester.pump();
-    return controller!;
+    // The files are read (outside the test's fake time) before the test goes on.
+    final c = controller!;
+    for (var i = 0; i < 100 && (i == 0 || c.loading); i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump();
+    }
+    await tester.pump();
+    return c;
   }
 
   /// Lets file reads and decoding finish (they run outside the test's fake time).
@@ -99,16 +112,6 @@ void main() {
     }
     expect(done(), isTrue, reason: 'did not settle');
     await tester.pump();
-  }
-
-  Future<void> openFiles(
-    WidgetTester tester,
-    ViewerController c,
-    List<String> paths,
-  ) async {
-    var done = false;
-    c.open(paths).then((_) => done = true);
-    await settle(tester, () => done);
   }
 
   Future<void> keys(
@@ -185,22 +188,83 @@ void main() {
   }
 
   testWidgets(
-    'launched without files: the Open dialog, then the empty window',
+    'launched without files: only the Open panel, no empty window (preview#24)',
     (tester) async {
-      final path = png('photo.png', 200, 100);
-      final c = await pump(tester);
+      final app = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SilicaApp.channel,
+        (call) async {
+          app.add(call);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SilicaApp.channel,
+          null,
+        ),
+      );
+      tester.view.physicalSize = const Size(1000, 700);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        PreviewApp(
+          loader: DocumentLoader(pdf: backend, writer: writer),
+          dialogs: dialogs,
+          locale: const Locale('en'),
+          onController: (c) => controller = c,
+        ),
+      );
+      await tester.pump();
+      // The window goes before its first frame; the Open panel is the only thing shown.
+      expect(app.map((c) => c.method), contains('closeWindow'));
       expect(dialogs.openCalls, 1);
-      expect(find.byKey(const ValueKey('empty open')), findsOneWidget);
+      expect(find.byType(PreviewWindow), findsNothing);
+      expect(find.byKey(const ValueKey('empty open')), findsNothing);
+      // Cancelled: still no window; the menus still offer File › Open….
+      await tester.pump();
+      expect(find.byType(PreviewWindow), findsNothing);
+      expect(app.map((c) => c.method), isNot(contains('openWindow')));
+      final bar = tester.widget<SilicaWindowlessMenuBar>(
+        find.byType(SilicaWindowlessMenuBar),
+      );
+      final file = bar.menus.whereType<SilicaMenu>().firstWhere(
+        (m) => m.label == 'File',
+      );
+      final open = file.menus.single as SilicaMenuItem;
+      expect(open.label, 'Open…');
+      // A file chosen there: the window, with it.
+      final path = png('photo.png', 200, 100);
       dialogs.opens.add([path]);
-      await tester.tap(find.byKey(const ValueKey('empty open')));
-      await settle(tester, () => c.document != null);
+      open.onSelected!();
+      await settle(tester, () => controller?.document != null);
       expect(dialogs.openCalls, 2);
+      expect(find.byType(PreviewWindow), findsOneWidget);
       expect(titleOf(tester), 'photo.png');
       // One image: no second line.
       expect(subtitleOf(tester), isNull);
+      await tester.pump();
+      expect(app.map((c) => c.method), contains('openWindow'));
       // ⌘O asks again.
       await keys(tester, LogicalKeyboardKey.keyO);
       expect(dialogs.openCalls, 3);
+    },
+  );
+
+  testWidgets(
+    'a reopen with no window shows the Open panel alone (preview#24)',
+    (tester) async {
+      await pump(tester, files: [png('a.png', 20, 10)]);
+      await SilicaApp.handle('lastWindowClosed', const {});
+      await tester.pump();
+      expect(find.byType(PreviewWindow), findsNothing);
+      final opened = dialogs.openCalls;
+      await SilicaApp.handle('reopen', const {'windowless': true});
+      await tester.pump();
+      await tester.pump();
+      // Cancelled (the fake answers nothing): no window.
+      expect(dialogs.openCalls, opened + 1);
+      expect(find.byType(PreviewWindow), findsNothing);
     },
   );
 
@@ -223,16 +287,22 @@ void main() {
         null,
       ),
     );
-    final c = await pump(tester, screen: const Size(2560, 1440));
-    await openFiles(tester, c, [png('a.png', 900, 500)]);
+    await pump(
+      tester,
+      screen: const Size(2560, 1440),
+      files: [png('a.png', 900, 500)],
+    );
     await tester.pump();
     expect(sizes.single['width'], 900);
     expect(sizes.single['height'], 604);
   });
 
   testWidgets('the toolbar: the measured places at 1200 pt', (tester) async {
-    final c = await pump(tester, size: const Size(1200, 800));
-    await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+    await pump(
+      tester,
+      size: const Size(1200, 800),
+      files: [pdf('book.pdf', book(3))],
+    );
     Rect at(String key) => tester.getRect(find.byKey(ValueKey(key)));
     // Pieces: the window buttons' slot of 96, the view piece (a 73 × 36 capsule, 4 pt of
     // padding, 8 from the top), the title block from x 177.
@@ -251,10 +321,11 @@ void main() {
   testWidgets('a narrow window: the search circle and the overflow menu', (
     tester,
   ) async {
-    final c = await pump(tester, size: const Size(708, 500));
-    await openFiles(tester, c, [
-      pdf('a long name for a document.pdf', book(2)),
-    ]);
+    await pump(
+      tester,
+      size: const Size(708, 500),
+      files: [pdf('a long name for a document.pdf', book(2))],
+    );
     expect(find.byKey(const ValueKey('search circle')), findsOneWidget);
     expect(find.byKey(const ValueKey('overflow')), findsOneWidget);
     expect(find.byKey(const ValueKey('search field')), findsNothing);
@@ -278,8 +349,7 @@ void main() {
   testWidgets('zoom: steps with the buttons and keys, animated', (
     tester,
   ) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [png('a.png', 200, 100)]);
+    final c = await pump(tester, files: [png('a.png', 200, 100)]);
     expect(c.scale, 1);
     // Actual size is off at 100 %.
     expect(
@@ -318,8 +388,7 @@ void main() {
   testWidgets('rotate with the button and ⌘L ⌘R; flip from the context menu', (
     tester,
   ) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [png('a.png', 200, 100)]);
+    final c = await pump(tester, files: [png('a.png', 200, 100)]);
     await tester.tap(find.byKey(const ValueKey('rotate')));
     await tester.pump(const Duration(milliseconds: 300));
     expect(c.image!.quarterTurns, 3);
@@ -348,8 +417,10 @@ void main() {
   testWidgets('several images: thumbnails, choosing one, hiding the sidebar', (
     tester,
   ) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [png('a.png', 40, 20), png('b.png', 20, 40)]);
+    final c = await pump(
+      tester,
+      files: [png('a.png', 40, 20), png('b.png', 20, 40)],
+    );
     expect(find.byKey(const ValueKey('thumbnails')), findsOneWidget);
     expect(subtitleOf(tester), '2 documents, 2 pages in all');
     await tester.tap(find.byKey(const ValueKey('thumbnail 1')));
@@ -379,8 +450,7 @@ void main() {
   });
 
   testWidgets('the view menu: sidebar kinds and the layouts', (tester) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [pdf('book.pdf', book(5))]);
+    final c = await pump(tester, files: [pdf('book.pdf', book(5))]);
     expect(subtitleOf(tester), 'Page 1 of 5');
     await keys(
       tester,
@@ -424,8 +494,7 @@ void main() {
   });
 
   testWidgets('the sidebar is resized by its edge, 160 to 400', (tester) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+    final c = await pump(tester, files: [pdf('book.pdf', book(3))]);
     expect(tester.getSize(find.byKey(const ValueKey('sidebar'))).width, 160);
     await tester.drag(
       find.byKey(const ValueKey('sidebar resizer')),
@@ -442,8 +511,7 @@ void main() {
   });
 
   testWidgets('bookmarks: ⌘D, the bookmarks list', (tester) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+    final c = await pump(tester, files: [pdf('book.pdf', book(3))]);
     c.goTo(2);
     await tester.pump();
     await keys(tester, LogicalKeyboardKey.keyD);
@@ -468,8 +536,7 @@ void main() {
         return null;
       },
     );
-    final c = await pump(tester);
-    await openFiles(tester, c, [pdf('book.pdf', book(4))]);
+    final c = await pump(tester, files: [pdf('book.pdf', book(4))]);
     await keys(tester, LogicalKeyboardKey.keyF);
     await tester.pump();
     await tester.enterText(find.byKey(const ValueKey('search field')), 'WORLD');
@@ -519,8 +586,7 @@ void main() {
   testWidgets('highlights and notes: the list, a note and its popover', (
     tester,
   ) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+    final c = await pump(tester, files: [pdf('book.pdf', book(3))]);
     var done = false;
     c.addNote(contents: 'first note').then((_) => done = true);
     await settle(tester, () => done);
@@ -543,8 +609,7 @@ void main() {
   testWidgets('export: the options sheet, JPEG quality, the Save dialog', (
     tester,
   ) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [png('photo.png', 20, 10)]);
+    await pump(tester, files: [png('photo.png', 20, 10)]);
     dialogs.savePath = '${dir.path}/out.jpg';
     final window = tester.state<PreviewWindowState>(find.byType(PreviewWindow));
     window.export();
@@ -573,12 +638,12 @@ void main() {
   testWidgets('export of a PNG with transparency offers the alpha', (
     tester,
   ) async {
-    final c = await pump(tester);
     final transparent = img.Image(width: 4, height: 4, numChannels: 4)
       ..clear(img.ColorRgba8(0, 0, 0, 0));
-    await openFiles(tester, c, [
-      write(dir, 'clear.png', img.encodePng(transparent)),
-    ]);
+    await pump(
+      tester,
+      files: [write(dir, 'clear.png', img.encodePng(transparent))],
+    );
     final window = tester.state<PreviewWindowState>(find.byType(PreviewWindow));
     window.export();
     await tester.pumpAndSettle();
@@ -588,8 +653,7 @@ void main() {
   });
 
   testWidgets('the inspector: a 260 pt pane with four tabs', (tester) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [png('photo.png', 20, 10)]);
+    await pump(tester, files: [png('photo.png', 20, 10)]);
     await keys(tester, LogicalKeyboardKey.keyI);
     expect(find.byKey(const ValueKey('inspector')), findsOneWidget);
     expect(tester.getSize(find.byKey(const ValueKey('inspector'))).width, 260);
@@ -602,9 +666,8 @@ void main() {
   });
 
   testWidgets('a protected PDF: the password in the window', (tester) async {
-    final c = await pump(tester);
     final path = pdf('secret.pdf', FakePdf([const FakePage()], password: 'pw'));
-    await openFiles(tester, c, [path]);
+    final c = await pump(tester, files: [path]);
     await tester.pump();
     expect(find.byKey(const ValueKey('password view')), findsOneWidget);
     expect(titleOf(tester), 'secret.pdf');
@@ -651,8 +714,7 @@ void main() {
   });
 
   testWidgets('the slideshow: the HUD, turning, Esc', (tester) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+    final c = await pump(tester, files: [pdf('book.pdf', book(3))]);
     await keys(tester, LogicalKeyboardKey.keyF, shift: true);
     expect(find.byKey(const ValueKey('slideshow')), findsOneWidget);
     final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
@@ -678,8 +740,7 @@ void main() {
   testWidgets('markup: the strip, a rectangle, its handles, delete', (
     tester,
   ) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [png('photo.png', 400, 200)]);
+    final c = await pump(tester, files: [png('photo.png', 400, 200)]);
     await keys(tester, LogicalKeyboardKey.keyA, shift: true);
     expect(find.byKey(const ValueKey('markup bar')), findsOneWidget);
     expect(tester.getSize(find.byKey(const ValueKey('markup bar'))).height, 36);
@@ -707,8 +768,7 @@ void main() {
   testWidgets('Adjust Size: the sheet, half the width, proportional', (
     tester,
   ) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [png('photo.png', 400, 200)]);
+    final c = await pump(tester, files: [png('photo.png', 400, 200)]);
     final window = tester.state<PreviewWindowState>(find.byType(PreviewWindow));
     findCommand(
       window.menus(AppLocalizations.of(window.context)),
@@ -727,8 +787,7 @@ void main() {
   });
 
   testWidgets('Edit Permissions: passwords must match', (tester) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, [pdf('book.pdf', book(1))]);
+    final c = await pump(tester, files: [pdf('book.pdf', book(1))]);
     final window = tester.state<PreviewWindowState>(find.byType(PreviewWindow));
     findCommand(
       window.menus(AppLocalizations.of(window.context)),
@@ -754,9 +813,8 @@ void main() {
   });
 
   testWidgets('Revert asks first, then brings the file back', (tester) async {
-    final c = await pump(tester);
     final path = png('photo.png', 20, 10);
-    await openFiles(tester, c, [path]);
+    final c = await pump(tester, files: [path]);
     await keys(tester, LogicalKeyboardKey.keyR);
     final window = tester.state<PreviewWindowState>(find.byType(PreviewWindow));
     findCommand(
@@ -784,8 +842,7 @@ void main() {
         null,
       ),
     );
-    final c = await pump(tester);
-    await openFiles(tester, c, [png('photo.png', 20, 10)]);
+    await pump(tester, files: [png('photo.png', 20, 10)]);
     calls.clear();
     final gesture = await tester.startGesture(
       tester.getCenter(find.byKey(const ValueKey('title block'))),
@@ -798,9 +855,8 @@ void main() {
   });
 
   testWidgets('the title popover renames the file', (tester) async {
-    final c = await pump(tester);
     final path = png('photo.png', 20, 10);
-    await openFiles(tester, c, [path]);
+    final c = await pump(tester, files: [path]);
     await tester.tap(find.byKey(const ValueKey('title block')));
     // The bar's double-click recognizer holds the click for its timeout.
     await tester.pump(const Duration(milliseconds: 400));
@@ -832,8 +888,7 @@ void main() {
   });
 
   testWidgets('a file that cannot open: the alert', (tester) async {
-    final c = await pump(tester);
-    await openFiles(tester, c, ['${dir.path}/missing.png']);
+    await pump(tester, files: ['${dir.path}/missing.png']);
     expect(find.text('The file couldn\'t be opened'), findsOneWidget);
     await tester.tap(find.text('OK'));
     await tester.pump();
@@ -841,8 +896,11 @@ void main() {
   });
 
   testWidgets('in Italian', (tester) async {
-    final c = await pump(tester, locale: const Locale('it'));
-    await openFiles(tester, c, [pdf('libro.pdf', book(3))]);
+    await pump(
+      tester,
+      locale: const Locale('it'),
+      files: [pdf('libro.pdf', book(3))],
+    );
     expect(subtitleOf(tester), 'Pagina 1 di 3');
   });
 
@@ -868,8 +926,7 @@ void main() {
     }
 
     testWidgets('the menus of the bar, in order', (tester) async {
-      final c = await pump(tester);
-      await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+      await pump(tester, files: [pdf('book.pdf', book(3))]);
       // As published: silica_ui adds the standard Window and Help menus (silica-ui#99), whose
       // titles the bar gives.
       final bar = SilicaMenus.withStandard(await model(tester));
@@ -907,8 +964,7 @@ void main() {
     testWidgets('states follow the document; unavailable items are disabled', (
       tester,
     ) async {
-      final c = await pump(tester);
-      await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+      final c = await pump(tester, files: [pdf('book.pdf', book(3))]);
       var bar = await model(tester);
       SilicaMenuItem at(String m, String label) =>
           item(bar, m, label) as SilicaMenuItem;
@@ -941,8 +997,7 @@ void main() {
     });
 
     testWidgets('choosing an item runs its action', (tester) async {
-      final c = await pump(tester);
-      await openFiles(tester, c, [pdf('book.pdf', book(3))]);
+      final c = await pump(tester, files: [pdf('book.pdf', book(3))]);
       var bar = await model(tester);
       item(bar, 'View', 'Single Page').onSelected!();
       await tester.pump();
@@ -997,10 +1052,8 @@ void main() {
       tester,
     ) async {
       service(present: true);
-      final c = await pump(tester);
-      expect(find.byKey(const ValueKey('share')), findsNothing);
       final path = png('a.png', 40, 30);
-      await openFiles(tester, c, [path]);
+      await pump(tester, files: [path]);
       await flush(tester);
       expect(find.byKey(const ValueKey('share')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('share')));
@@ -1018,8 +1071,7 @@ void main() {
       tester,
     ) async {
       service(present: false);
-      final c = await pump(tester);
-      await openFiles(tester, c, [png('a.png', 40, 30)]);
+      await pump(tester, files: [png('a.png', 40, 30)]);
       await flush(tester);
       expect(calls, isNotEmpty);
       expect(find.byKey(const ValueKey('share')), findsNothing);
@@ -1029,10 +1081,9 @@ void main() {
       tester,
     ) async {
       service(present: false);
-      final c = await pump(tester);
       final first = png('first.png', 40, 30);
       final second = png('second.png', 50, 20);
-      await openFiles(tester, c, [first]);
+      final c = await pump(tester, files: [first]);
       expect(c.files, [first]);
       expect(SilicaApp.onOpen, isNotNull);
       SilicaApp.onOpen!(['--flag', 'file://$second']);
