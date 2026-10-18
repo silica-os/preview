@@ -3,6 +3,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:silica_ui/silica_ui.dart';
 
+import 'src/app_info.dart';
 import 'src/args.dart';
 import 'src/model/document.dart';
 import 'src/model/viewer.dart';
@@ -14,6 +15,8 @@ import 'src/ui/app.dart';
 
 void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
+  // About Preview and the standard app menu (silica-ui#99).
+  SilicaApp.info = appInfo;
   // The toolbar is unified with the window: Ossido draws only the window buttons.
   SilicaWindow.setFullSizeContent(toolbarHeight).ignore();
   SilicaWindow.setSizeLimits(min: PreviewMetrics.minWindow).ignore();

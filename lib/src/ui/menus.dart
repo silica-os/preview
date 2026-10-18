@@ -887,6 +887,5 @@ List<PlatformMenuItem> silicaMenuModel(
           ),
       ],
     ),
-  SilicaMenus.window(l.menuWindow),
-  SilicaMenus.help(l.menuHelp),
+  // Window and Help are silica_ui's standard menus (silica-ui#99).
 ];

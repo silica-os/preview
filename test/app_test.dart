@@ -870,12 +870,38 @@ void main() {
     testWidgets('the menus of the bar, in order', (tester) async {
       final c = await pump(tester);
       await openFiles(tester, c, [pdf('book.pdf', book(3))]);
-      final bar = await model(tester);
+      // As published: silica_ui adds the standard Window and Help menus (silica-ui#99), whose
+      // titles the bar gives.
+      final bar = SilicaMenus.withStandard(await model(tester));
       expect(
         [for (final m in bar.whereType<PlatformMenu>()) m.label],
-        ['Preview', 'File', 'Edit', 'View', 'Go', 'Tools', 'Window', 'Help'],
+        ['Preview', 'File', 'Edit', 'View', 'Go', 'Tools', '', ''],
       );
-      expect((bar.first as SilicaMenu).role, SilicaMenuRole.app);
+      expect(
+        [for (final m in bar.whereType<SilicaMenu>()) m.role],
+        [
+          SilicaMenuRole.app,
+          for (var i = 0; i < 5; i++) SilicaMenuRole.none,
+          SilicaMenuRole.window,
+          SilicaMenuRole.help,
+        ],
+      );
+      // The standard app menu: About first, enabled with an action; no Settings… (Preview has
+      // no settings window).
+      final app = (bar.first as SilicaMenu).menus;
+      final about = (app.first as PlatformMenuItemGroup).members.single;
+      expect((about as SilicaMenuItem).role, SilicaMenuItemRole.about);
+      expect(about.onSelected, isNotNull);
+      expect(
+        app
+            .whereType<PlatformMenuItemGroup>()
+            .expand((g) => g.members)
+            .any(
+              (i) =>
+                  i is SilicaMenuItem && i.role == SilicaMenuItemRole.settings,
+            ),
+        isFalse,
+      );
     });
 
     testWidgets('states follow the document; unavailable items are disabled', (
