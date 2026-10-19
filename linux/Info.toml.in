@@ -1,0 +1,35 @@
+# Preview as a Silica app bundle (silica-os docs/app-bundles.md): silica-packages and
+# `cargo xtask os deploy` fill the placeholders and sign it. A system app: from /usr/Applications
+# it runs without a sandbox; [permissions] is what a copy elsewhere is given.
+format = 1
+id = "dev.frascella.Preview"
+name = "Preview"
+"name.it" = "Anteprima"
+generic_name = "Image and PDF Viewer"
+comment = "View images and PDF documents"
+version = "@VERSION@"
+build = @BUILD@
+minimum_silica = "0.2.0"
+kind = "flutter"
+runtime = "dev.silica.Platform//1"
+args = ["--size", "708x500", "--title", "Preview", "--multi-window"]
+categories = ["Graphics", "Viewer", "Office"]
+keywords = ["image", "picture", "photo", "pdf", "viewer", "immagine", "foto", "visore"]
+
+[types]
+"image/png" = "viewer"
+"image/jpeg" = "viewer"
+"image/gif" = "viewer"
+"image/tiff" = "viewer"
+"image/webp" = "viewer"
+"image/bmp" = "viewer"
+"image/svg+xml" = "viewer"
+"application/pdf" = "viewer"
+
+[permissions]
+network = false
+devices = "gpu"
+
+[developer]
+name = "Silica"
+key = "@DEVELOPER_KEY@"
